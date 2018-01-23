@@ -28,4 +28,7 @@ impl Config {
         let config: Config = toml::from_str(&config).unwrap();
         config
     }
+    pub fn hello() {
+        println!("Hello World!");
+    }
 }

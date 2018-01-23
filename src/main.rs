@@ -32,6 +32,7 @@ impl EventHandler for Handler {
 
 fn main() {
     let config = Config::read_config("./config/config.toml");
+    Config::hello();
     println!("{:?}", config);
     /*assert_eq!(config.required.token, "ibimseintoken");
     assert_eq!(config.optional.setting, true);*/
