@@ -1,0 +1,10 @@
+[package]
+name = "rsbot"
+version = "0.1.0"
+authors = ["raymond.mao"]
+
+[dependencies]
+toml = "*"
+serde = "*"
+serde_derive = "*"
+serenity = "*"
