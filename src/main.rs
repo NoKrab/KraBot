@@ -17,10 +17,14 @@ use serenity::model::gateway::Ready;
 use serenity::prelude::*;
 use serenity::http;
 
+
+use std::time::SystemTime;
+
 struct Handler;
 
 impl EventHandler for Handler {
-    fn ready(&self, _: Context, ready: Ready) {
+    fn ready(&self, ctx: Context, ready: Ready) {
+        ctx.set_game_name("I bims ein Rust Bot");
         println!("{} is connected!", ready.user.name);
     }
 
@@ -49,12 +53,35 @@ fn main() {
         Err(why) => panic!("Couldn't get application info: {:?}", why),
     };
 
+    
+
     client.with_framework(
         StandardFramework::new()
             .configure(|c| c.owners(owners).prefix(&config.required.prefix))
+            .before( |_, _m, cmd_name| {
+//                let sys_time = SystemTime::now();
+//                println!("{:?}", &_sys_time);
+
+                println!("Running command {}", cmd_name);
+                true
+            })
+            .after( |_, _m, cmd_name, error| {
+                //  Print out an error if it happened
+                if let Err(why) = error {
+                    println!("Error in {}: {:?}", cmd_name, why);
+                } else {
+                    println!("Command executed: {}", cmd_name);
+//                    let difference = _sys_time.duration_since(_sys_time)
+//                                            .expect("SystemTime::duration_since failed");
+//                    println!("{:?}", difference);
+                }
+            })
             .command("ping", |c| c.cmd(commands::meta::ping))
             .command("multiply", |c| c.cmd(commands::math::multiply))
+            .command("fib", |c| c.cmd(commands::math::fibonacci))
+            .command("uptime", |c| c.cmd(commands::meta::uptime))
             .command("quit", |c| c.cmd(commands::owner::quit).owners_only(true)),
+
     );
 
     if let Err(why) = client.start() {
