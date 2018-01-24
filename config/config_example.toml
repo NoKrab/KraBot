@@ -1,0 +1,7 @@
+[required]
+token = "lorem_ipsum_token_insert_here"
+prefix = "!"
+owner_id = 1337
+
+[optional]
+setting = true
