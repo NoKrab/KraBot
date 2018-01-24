@@ -72,3 +72,4 @@ modules.xml
 **/*.rs.bk
 .idea/vcs.xml
 config/config.toml
+.vscode/
