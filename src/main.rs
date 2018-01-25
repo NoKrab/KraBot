@@ -14,10 +14,14 @@ use std::collections::HashSet;
 use serenity::framework::StandardFramework;
 use serenity::model::event::ResumedEvent;
 use serenity::model::gateway::Ready;
+use serenity::model::id::ChannelId;
+use serenity::model::misc::Mentionable;
 use serenity::prelude::*;
 use serenity::http;
-
-
+use serenity::client::bridge::voice::ClientVoiceManager;
+use serenity::client::{CACHE, Client, Context, EventHandler};
+use serenity::Result as SerenityResult;
+use std::sync::Arc;
 use std::time::SystemTime;
 
 struct Handler;
@@ -53,19 +57,18 @@ fn main() {
         Err(why) => panic!("Couldn't get application info: {:?}", why),
     };
 
-    
 
     client.with_framework(
         StandardFramework::new()
             .configure(|c| c.owners(owners).prefix(&config.required.prefix))
-            .before( |_, _m, cmd_name| {
+            .before(|_, _m, cmd_name| {
 //                let sys_time = SystemTime::now();
 //                println!("{:?}", &_sys_time);
 
                 println!("Running command {}", cmd_name);
                 true
             })
-            .after( |_, _m, cmd_name, error| {
+            .after(|_, _m, cmd_name, error| {
                 //  Print out an error if it happened
                 if let Err(why) = error {
                     println!("Error in {}: {:?}", cmd_name, why);
@@ -81,7 +84,6 @@ fn main() {
             .command("fib", |c| c.cmd(commands::math::fibonacci))
             .command("uptime", |c| c.cmd(commands::meta::uptime))
             .command("quit", |c| c.cmd(commands::owner::quit).owners_only(true)),
-
     );
 
     if let Err(why) = client.start() {

@@ -1,6 +1,7 @@
 [required]
 token = "MjQzNTM0NzY1MjkzMTc0Nzg0.DUjMeg.ewERFiLf-9F3PsTeABadnWffEFY"
 prefix = "!"
+owner_id = 1337
 
 [optional]
 setting = true
