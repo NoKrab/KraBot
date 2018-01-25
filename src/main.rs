@@ -38,6 +38,7 @@ impl EventHandler for Handler {
 }
 
 fn main() {
+    let kappa: SystemTime = SystemTime::now();
     let config = Config::read_config("./config/config.toml");
     Config::hello();
     println!("{:?}", config);
@@ -57,13 +58,14 @@ fn main() {
         Err(why) => panic!("Couldn't get application info: {:?}", why),
     };
 
-
     client.with_framework(
         StandardFramework::new()
             .configure(|c| c.owners(owners).prefix(&config.required.prefix))
-            .before(|_, _m, cmd_name| {
-//                let sys_time = SystemTime::now();
-//                println!("{:?}", &_sys_time);
+            .before(move |_, _m, cmd_name| {
+                println!("{:?}", kappa);
+                let now = SystemTime::now();
+                let time =  now.duration_since(kappa);
+                println!("Uptime {:?}", time);
 
                 println!("Running command {}", cmd_name);
                 true
