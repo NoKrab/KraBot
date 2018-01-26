@@ -48,15 +48,6 @@ command!(deafen(ctx, msg) {
 });
 
 command!(join(ctx, msg, args) {
-    let connect_to = match args.single::<u64>() {
-        Ok(id) => ChannelId(id),
-        Err(_) => {
-            check_msg(msg.reply("Requires a valid voice channel ID be given"));
-
-            return Ok(());
-        },
-    };
-
     let guild_id = match CACHE.read().guild_channel(msg.channel_id) {
         Some(channel) => channel.read().guild_id,
         None => {
@@ -66,13 +57,55 @@ command!(join(ctx, msg, args) {
         },
     };
 
-    let mut manager_lock = ctx.data.lock().get::<VoiceManager>().cloned().unwrap();
-    let mut manager = manager_lock.lock();
+    //Gets HashMap from all Users in the current guild which are in a Voice Channel: (UserID ->VoiceState)
+    let voice_members = match CACHE.read().guild(guild_id) {
+        Some(guild) => {
+            guild.read().voice_states.clone()
+        },
+        None => {
+            return Ok(());
+        },
+    };
+     println!("User in Voice: {:#?}", voice_members);
 
-    if manager.join(guild_id, connect_to).is_some() {
-        check_msg(msg.channel_id.say(&format!("Joined {}", connect_to.mention())));
-    } else {
-        check_msg(msg.channel_id.say("Error joining the channel"));
+    //If User is in Voice join VoiceChannel...
+    if voice_members.contains_key(&msg.author.id) {             //Searches for Key (UserId) in HashMap
+        check_msg(msg.reply("Author is in Voice channel"));
+        let connect_to = match voice_members.get(&msg.author.id) {
+            Some(voice_state) => voice_state.channel_id.unwrap(),
+            None => {
+                return Ok(());
+            },
+        };
+        println!("Voice Channel: {:?}", connect_to);
+
+        let mut manager_lock = ctx.data.lock().get::<VoiceManager>().cloned().unwrap();
+        let mut manager = manager_lock.lock();
+
+        if manager.join(guild_id, connect_to).is_some() {
+            check_msg(msg.channel_id.say(&format!("Joined {}", connect_to.mention())));
+        } else {
+            check_msg(msg.channel_id.say("Error joining the channel"));
+        }
+    } else { //... If not use args
+       check_msg(msg.reply("Author ist not in Voice Channel"));
+        let connect_to = match args.single::<u64>() {
+            Ok(id) => ChannelId(id),
+            Err(_) => {
+                check_msg(msg.reply("Requires a valid voice channel ID be given"));
+
+                return Ok(());
+            },
+        };
+
+        let mut manager_lock = ctx.data.lock().get::<VoiceManager>().cloned().unwrap();
+        let mut manager = manager_lock.lock();
+
+        if manager.join(guild_id, connect_to).is_some() {
+            check_msg(msg.channel_id.say(&format!("Joined {}", connect_to.mention())));
+        } else {
+            check_msg(msg.channel_id.say("Error joining the channel"));
+        }
     }
 });
 

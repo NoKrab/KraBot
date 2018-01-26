@@ -83,6 +83,7 @@ fn main() {
         Err(why) => panic!("Couldn't get application info: {:?}", why),
     };
 
+
     client.with_framework(
         StandardFramework::new()
             .configure(|c| c.owners(owners).prefix(&config.required.prefix)

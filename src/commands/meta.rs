@@ -4,4 +4,5 @@ command!(ping(_ctx, msg) {
 
 command!(uptime(_ctx, msg) {
     let _ = msg.channel_id.say("Uptime!");
+//    println!("{:?}", _ctx.data);
 });
