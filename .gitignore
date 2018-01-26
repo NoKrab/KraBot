@@ -77,3 +77,5 @@ config/config.toml
 log/
 
 \.idea/
+
+db/

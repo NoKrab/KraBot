@@ -17,5 +17,5 @@ git = "https://github.com/zeyla/serenity.git"
 features = ["cache", "framework", "standard_framework", "voice"]
 
 [dependencies.rusqlite]
-git = "https://github.com/jgallagher/rusqlite.git"
+version = "0.11.0"
 features = ["bundled"]

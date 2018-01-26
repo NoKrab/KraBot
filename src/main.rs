@@ -32,10 +32,13 @@ use commands::voice::VoiceManager;
 
 struct Handler;
 
+const CONFIG_PATH: &str = "./config/config.toml";
+
 impl EventHandler for Handler {
     fn ready(&self, ctx: Context, ready: Ready) {
         ctx.set_game_name("I bims ein Rust Bot");
         println!("{} is connected!", ready.user.name);
+        let sqlite_path = Config::get_sqlite_path(CONFIG_PATH);
         //this is actually a terrible idea
         if !Path::new("./log").exists() { fs::create_dir("./log").expect("Error creating folder") };
         let mut file = File::create("./log/startuptime.log").expect("Error creating file!");
@@ -50,11 +53,12 @@ impl EventHandler for Handler {
 fn main() {
     let _t_database = thread::spawn(move || {
         println!("Thread database started!");
-        database::database::start_db();
+        database::database::execute_statement();
     });
 
-    let config = Config::read_config("./config/config.toml");
+    let config = Config::read_config(CONFIG_PATH);
     println!("{:?}", config);
+
     let mut client = Client::new(&config.required.token, Handler).expect("Error creating client");
 
     {

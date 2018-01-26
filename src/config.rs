@@ -13,6 +13,7 @@ pub struct Required {
     pub token: String,
     pub prefix: String,
     pub mention: bool,
+    pub sqlite_path: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -30,5 +31,15 @@ impl Config {
             .expect("Unable to read string");
         let config: Config = toml::from_str(&config).unwrap();
         config
+    }
+    pub fn get_sqlite_path(path: &str) -> String {
+        let mut config = String::new();
+        let f = File::open(path)
+            .expect("Unable to open file");
+        let mut br = BufReader::new(f);
+        br.read_to_string(&mut config)
+            .expect("Unable to read string");
+        let config: Config = toml::from_str(&config).unwrap();
+        config.required.sqlite_path
     }
 }
