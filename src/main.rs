@@ -67,7 +67,7 @@ fn main() {
                     println!("Error in {}: {:?}", cmd_name, why);
                 } else {
                     let mut duration = Utc::now().signed_duration_since(_m.timestamp);
-                    println!("Command '{}' completed in {}", cmd_name, duration.format("%S %.f").to_string());
+                    println!("Command '{}' completed in {:#?}", cmd_name, duration);
                 }
             })
             .command("ping", |c| c.cmd(commands::meta::ping))
