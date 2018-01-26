@@ -12,15 +12,15 @@ extern crate chrono;
 mod config;
 mod commands;
 
-use config::Config;
+use std::sync::Arc;
+use std::time::SystemTime;
 use std::collections::HashSet;
+use config::Config;
 use serenity::framework::StandardFramework;
 use serenity::model::event::ResumedEvent;
 use serenity::model::gateway::Ready;
 use serenity::prelude::*;
 use serenity::http;
-use std::sync::Arc;
-use std::time::SystemTime;
 use chrono::prelude::*;
 
 use commands::voice::VoiceManager;
@@ -81,7 +81,13 @@ fn main() {
             .command("fib", |c| c.cmd(commands::math::fibonacci))
             .command("uptime", |c| c.cmd(commands::meta::uptime))
             .command("quit", |c| c.cmd(commands::owner::quit).owners_only(true))
-            .command("join", |c| c.cmd(commands::voice::join)),
+            .command("join", |c| c.cmd(commands::voice::join))
+            .command("leave", |c| c.cmd(commands::voice::leave))
+            .command("play", |c| c.cmd(commands::voice::play))
+            .command("mute", |c| c.cmd(commands::voice::mute))
+            .command("unmute", |c| c.cmd(commands::voice::unmute))
+            .command("deafen", |c| c.cmd(commands::voice::deafen))
+            .command("undeafen", |c| c.cmd(commands::voice::undeafen)),
     );
 
 
