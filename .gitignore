@@ -73,3 +73,5 @@ modules.xml
 .idea/vcs.xml
 config/config.toml
 .vscode/
+
+log/

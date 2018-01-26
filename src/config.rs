@@ -12,6 +12,7 @@ pub struct Config {
 pub struct Required {
     pub token: String,
     pub prefix: String,
+    pub mention: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -29,8 +30,5 @@ impl Config {
             .expect("Unable to read string");
         let config: Config = toml::from_str(&config).unwrap();
         config
-    }
-    pub fn hello() {
-        println!("Hello World!");
     }
 }
