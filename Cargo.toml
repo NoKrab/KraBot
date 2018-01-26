@@ -19,3 +19,6 @@ features = ["cache", "framework", "standard_framework", "voice"]
 [dependencies.rusqlite]
 version = "0.11.0"
 features = ["bundled"]
+
+[dependencies.redis]
+git = "https://github.com/mitsuhiko/redis-rs.git"

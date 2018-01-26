@@ -9,6 +9,7 @@ extern crate typemap;
 extern crate chrono;
 extern crate rusqlite;
 extern crate time;
+extern crate redis;
 
 mod config;
 mod commands;
@@ -43,6 +44,8 @@ impl EventHandler for Handler {
         if !Path::new("./log").exists() { fs::create_dir("./log").expect("Error creating folder") };
         let mut file = File::create("./log/startuptime.log").expect("Error creating file!");
         file.write_fmt(format_args!("{:?}", Utc::now())).expect("Error writing to file!");
+        let t = database::redis::set_startuptime(Utc::now().to_string());
+        println!("{:?}", t);
     }
 
     fn resume(&self, _: Context, _: ResumedEvent) {
@@ -51,10 +54,14 @@ impl EventHandler for Handler {
 }
 
 fn main() {
-    let _t_database = thread::spawn(move || {
-        println!("Thread database started!");
-        database::database::execute_statement();
-    });
+//    let _t_database = thread::spawn(move || {
+//        println!("Thread database started!");
+//        database::database::execute_statement();
+//    });
+
+    let redis_var = database::redis::fetch_an_integer();
+    println!("{:?}", redis_var);
+
 
     let config = Config::read_config(CONFIG_PATH);
     println!("{:?}", config);
