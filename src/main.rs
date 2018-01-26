@@ -17,6 +17,7 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 use config::Config;
+use std::path::Path;
 use serenity::framework::StandardFramework;
 use serenity::model::event::ResumedEvent;
 use serenity::model::gateway::Ready;
@@ -32,7 +33,7 @@ impl EventHandler for Handler {
         ctx.set_game_name("I bims ein Rust Bot");
         println!("{} is connected!", ready.user.name);
         //this is actually a terrible idea
-        fs::create_dir("./log").expect("Error creating folder");
+        if !Path::new("./log").exists() { fs::create_dir("./log").expect("Error creating folder") };
         let mut file = File::create("./log/startuptime.log").expect("Error creating file!");
         file.write_fmt(format_args!("{:?}", Utc::now())).expect("Error writing to file!");
     }
