@@ -1,15 +1,18 @@
+extern crate toml;
 #[macro_use]
 extern crate log;
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate serenity;
-extern crate toml;
 extern crate typemap;
 extern crate chrono;
+extern crate rusqlite;
+extern crate time;
 
 mod config;
 mod commands;
+mod database;
 
 use std::sync::Arc;
 use std::collections::HashSet;
@@ -18,6 +21,7 @@ use std::fs::File;
 use std::io::Write;
 use config::Config;
 use std::path::Path;
+use std::thread;
 use serenity::framework::StandardFramework;
 use serenity::model::event::ResumedEvent;
 use serenity::model::gateway::Ready;
@@ -44,9 +48,13 @@ impl EventHandler for Handler {
 }
 
 fn main() {
+    let _t_database = thread::spawn(move || {
+        println!("Thread database started!");
+        database::database::start_db();
+    });
+
     let config = Config::read_config("./config/config.toml");
     println!("{:?}", config);
-
     let mut client = Client::new(&config.required.token, Handler).expect("Error creating client");
 
     {
