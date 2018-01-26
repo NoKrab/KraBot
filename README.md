@@ -12,4 +12,7 @@ The easiest way is to use the package manager of **MSYS2**.
    pacman -S mingw-w64-x86_64-toolchain
    pacman -S base-devel
    pacman -S mingw-w64-x86_64-libsodium mingw-w64-x86_64-opusfile mingw-w64-x86_64-opus
+   pacman -S mingw-w64-x86_64-ffmpeg
+   pacman -S mingw-w64-x86_64-python3 mingw-w64-x86_64-python3-pip
+   pip3.6 install -U youtube-dl
    ```
