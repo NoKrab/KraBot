@@ -12,6 +12,7 @@ pub struct Config {
 pub struct Required {
     pub token: String,
     pub prefix: String,
+    pub mention: bool,
 }
 
 #[derive(Debug, Deserialize)]

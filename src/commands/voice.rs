@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use typemap::Key;
 use serenity::client::bridge::voice::ClientVoiceManager;
-use serenity::client::{CACHE, Client, Context, EventHandler};
+use serenity::client::CACHE;
 use serenity::model::id::ChannelId;
 use serenity::model::channel::Message;
 use serenity::voice;

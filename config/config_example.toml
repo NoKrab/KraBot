@@ -1,6 +1,7 @@
 [required]
 token = "lorem_ipsum_token_insert_here"
 prefix = "!"
+mention = false #should the bot react on mention?
 owner_id = 1337
 
 [optional]

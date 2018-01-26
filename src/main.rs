@@ -61,7 +61,8 @@ fn main() {
 
     client.with_framework(
         StandardFramework::new()
-            .configure(|c| c.owners(owners).prefix(&config.required.prefix))
+            .configure(|c| c.owners(owners).prefix(&config.required.prefix)
+                .on_mention(config.required.mention)) //the trait does not accept a reference
             .before(|_, _m, cmd_name| {
                 println!("{:?}", _m);
                 println!("Running command {}", cmd_name);
