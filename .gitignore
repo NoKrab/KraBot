@@ -75,3 +75,5 @@ config/config.toml
 .vscode/
 
 log/
+
+\.idea/
