@@ -7,7 +7,7 @@ Since libsodium requires GNU ABI instead of MSVC ABI, it is needed to use the GN
 Getting the GNU ABI itself including dependencies for voice support
 ------
 The easiest way is to use the package manager of **MSYS2**.\
-*Attention do not try to install MSYS2 on a drive formatted with FAT\* or ReFS, because they do not support **hard links***
+*Attention do not try to install MSYS2 on a drive formatted with FAT\* or ReFS, because they do not support* **hard links**
 ```bash
    pacman -S mingw-w64-x86_64-toolchain
    pacman -S base-devel
