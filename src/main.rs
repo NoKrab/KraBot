@@ -5,6 +5,7 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serenity;
 extern crate toml;
+extern crate chrono;
 
 mod config;
 mod commands;
@@ -16,9 +17,7 @@ use serenity::model::event::ResumedEvent;
 use serenity::model::gateway::Ready;
 use serenity::prelude::*;
 use serenity::http;
-
-
-use std::time::SystemTime;
+use chrono::prelude::*;
 
 struct Handler;
 
@@ -53,15 +52,12 @@ fn main() {
         Err(why) => panic!("Couldn't get application info: {:?}", why),
     };
 
-    
 
     client.with_framework(
         StandardFramework::new()
             .configure(|c| c.owners(owners).prefix(&config.required.prefix))
             .before( |_, _m, cmd_name| {
-//                let sys_time = SystemTime::now();
-//                println!("{:?}", &_sys_time);
-
+                println!("{:?}", _m);
                 println!("Running command {}", cmd_name);
                 true
             })
@@ -70,10 +66,8 @@ fn main() {
                 if let Err(why) = error {
                     println!("Error in {}: {:?}", cmd_name, why);
                 } else {
-                    println!("Command executed: {}", cmd_name);
-//                    let difference = _sys_time.duration_since(_sys_time)
-//                                            .expect("SystemTime::duration_since failed");
-//                    println!("{:?}", difference);
+                    let mut duration = Utc::now().signed_duration_since(_m.timestamp);
+                    println!("Command '{}' completed in {:#?}", cmd_name, duration);
                 }
             })
             .command("ping", |c| c.cmd(commands::meta::ping))
