@@ -12,7 +12,6 @@ mod config;
 mod commands;
 
 use std::sync::Arc;
-use std::time::SystemTime;
 use std::collections::HashSet;
 use std::fs;
 use std::fs::File;
