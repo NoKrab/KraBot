@@ -15,14 +15,15 @@ mod config;
 mod commands;
 mod database;
 
+use config::Config;
 use std::sync::Arc;
 use std::collections::HashSet;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-use config::Config;
-use std::path::Path;
 use std::thread;
+use std::path::Path;
+use std::time::Duration;
 use serenity::framework::StandardFramework;
 use serenity::model::event::ResumedEvent;
 use serenity::model::gateway::Ready;
@@ -36,30 +37,36 @@ struct Handler;
 impl EventHandler for Handler {
     fn ready(&self, ctx: Context, ready: Ready) {
         ctx.set_game_name("I bims ein Rust Bot");
-        println!("{} is connected!", ready.user.name);
-        let sqlite_path = Config::get_sqlite_path(config::CONFIG_PATH);
-        //this is actually a terrible idea
-        if !Path::new("./log").exists() { fs::create_dir("./log").expect("Error creating folder") };
-        let mut file = File::create("./log/startuptime.log").expect("Error creating file!");
-        file.write_fmt(format_args!("{:?}", Utc::now())).expect("Error writing to file!");
-//        database::redis::startuptime::set_startuptime(Utc::now().to_string());
-    }
+        if let Some(shard) = ready.shard {
+            // Note that array index 0 is 0-indexed, while index 1 is 1-indexed.
+            //
+            // This may seem unintuitive, but it models Discord's behaviour.
+            println!(
+                "{} is connected on shard {}/{}!",
+                ready.user.name,
+                shard[0],
+                shard[1],
+            );
 
+            let sqlite_path = Config::get_sqlite_path(config::CONFIG_PATH);
+            //this is actually a terrible idea
+            if !Path::new("./log").exists() { fs::create_dir("./log").expect("Error creating folder") };
+            let mut file = File::create("./log/startuptime.log").expect("Error creating file!");
+            file.write_fmt(format_args!("{:?}", Utc::now())).expect("Error writing to file!");
+        }
+    }
     fn resume(&self, _: Context, _: ResumedEvent) {
         info!("Resumed");
     }
 }
 
 fn main() {
-//    let _t_database = thread::spawn(move || {
-//        println!("Thread database started!");
-//        database::database::execute_statement();
-//    });
-
-    let config = Config::read_config(config::CONFIG_PATH);
+    let config: Config = Config::get_config(config::CONFIG_PATH);
     println!("{:?}", config);
 
     let mut client = Client::new(&config.required.token, Handler).expect("Error creating client");
+
+    let manager = client.shard_manager.clone();
 
     {
         let mut data = client.data.lock();
@@ -109,5 +116,25 @@ fn main() {
             .command("undeafen", |c| c.cmd(commands::voice::undeafen)),
     );
 
-    let _ = client.start().map_err(|why| println!("Client ended: {:?}", why));
+    thread::spawn(move || {
+        loop {
+            thread::sleep(Duration::from_secs(30));
+
+            let lock = manager.lock();
+            let shard_runners = lock.runners.lock();
+
+            for (id, runner) in shard_runners.iter() {
+                println!(
+                    "Shard ID {} is {} with a latency of {:?}",
+                    id,
+                    runner.stage,
+                    runner.latency,
+                );
+            }
+        }
+    });
+
+    if let Err(why) = client.start_shards(2).map_err(|why| println!("Client ended: {:?}", why)) {
+        println!("Client error: {:?}", why);
+    }
 }

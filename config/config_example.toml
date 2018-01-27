@@ -6,4 +6,5 @@ sqlite_path = ""
 owner_id = 1337
 
 [optional]
+#database_name = ""
 setting = true

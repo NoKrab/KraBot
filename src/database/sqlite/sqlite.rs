@@ -3,6 +3,17 @@ use time::Timespec;
 use rusqlite::Connection;
 
 #[derive(Debug)]
+pub struct Databse {
+    path: String,
+}
+
+impl Databse {
+    pub fn create_db_connection(path: String) {
+        let conn = Connection::open("").unwrap();
+    }
+}
+
+#[derive(Debug)]
 struct Person {
     id: i32,
     name: String,
