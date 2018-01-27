@@ -2,6 +2,7 @@
 token = "lorem_ipsum_token_insert_here"
 prefix = "!"
 mention = false #should the bot react on mention?
+sqlite_path = ""
 owner_id = 1337
 
 [optional]
