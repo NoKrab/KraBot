@@ -33,19 +33,16 @@ use commands::voice::VoiceManager;
 
 struct Handler;
 
-const CONFIG_PATH: &str = "./config/config.toml";
-
 impl EventHandler for Handler {
     fn ready(&self, ctx: Context, ready: Ready) {
         ctx.set_game_name("I bims ein Rust Bot");
         println!("{} is connected!", ready.user.name);
-        let sqlite_path = Config::get_sqlite_path(CONFIG_PATH);
+        let sqlite_path = Config::get_sqlite_path(config::CONFIG_PATH);
         //this is actually a terrible idea
         if !Path::new("./log").exists() { fs::create_dir("./log").expect("Error creating folder") };
         let mut file = File::create("./log/startuptime.log").expect("Error creating file!");
         file.write_fmt(format_args!("{:?}", Utc::now())).expect("Error writing to file!");
-        let t = database::redis::set_startuptime(Utc::now().to_string());
-        println!("{:?}", t);
+//        database::redis::startuptime::set_startuptime(Utc::now().to_string());
     }
 
     fn resume(&self, _: Context, _: ResumedEvent) {
@@ -59,11 +56,7 @@ fn main() {
 //        database::database::execute_statement();
 //    });
 
-    let redis_var = database::redis::fetch_an_integer();
-    println!("{:?}", redis_var);
-
-
-    let config = Config::read_config(CONFIG_PATH);
+    let config = Config::read_config(config::CONFIG_PATH);
     println!("{:?}", config);
 
     let mut client = Client::new(&config.required.token, Handler).expect("Error creating client");

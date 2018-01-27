@@ -2,6 +2,8 @@ use toml;
 use std::fs::File;
 use std::io::{Read, BufReader};
 
+pub const CONFIG_PATH: &str = "./config/config.toml";
+
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub required: Required,
