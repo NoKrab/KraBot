@@ -1,7 +1,6 @@
 extern crate chrono;
 #[macro_use]
 extern crate log;
-extern crate redis;
 extern crate rusqlite;
 #[macro_use]
 extern crate serde_derive;
@@ -17,13 +16,15 @@ mod database;
 
 use config::Config;
 use database::sqlite::sqlite;
+use commands::voice::VoiceManager;
+
 use std::sync::Arc;
 use std::collections::HashSet;
-use std::fs;
-use std::fs::File;
-use std::io::Write;
 use std::thread;
-use std::path::Path;
+// use std::fs;
+// use std::fs::File;
+// use std::io::Write;
+// use std::path::Path;
 use std::time::Duration;
 use serenity::framework::StandardFramework;
 use serenity::model::event::ResumedEvent;
@@ -31,7 +32,6 @@ use serenity::model::gateway::Ready;
 use serenity::prelude::*;
 use serenity::http;
 use chrono::prelude::*;
-use commands::voice::VoiceManager;
 
 struct Handler;
 
