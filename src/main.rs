@@ -1,15 +1,15 @@
-extern crate toml;
+extern crate chrono;
 #[macro_use]
 extern crate log;
+extern crate redis;
+extern crate rusqlite;
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate serenity;
-extern crate typemap;
-extern crate chrono;
-extern crate rusqlite;
 extern crate time;
-extern crate redis;
+extern crate toml;
+extern crate typemap;
 
 mod config;
 mod commands;
@@ -43,16 +43,17 @@ impl EventHandler for Handler {
             // This may seem unintuitive, but it models Discord's behaviour.
             println!(
                 "{} is connected on shard {}/{}!",
-                ready.user.name,
-                shard[0],
-                shard[1],
+                ready.user.name, shard[0], shard[1],
             );
 
             let sqlite_path = Config::get_sqlite_path(config::CONFIG_PATH);
             //this is actually a terrible idea
-            if !Path::new("./log").exists() { fs::create_dir("./log").expect("Error creating folder") };
+            if !Path::new("./log").exists() {
+                fs::create_dir("./log").expect("Error creating folder")
+            };
             let mut file = File::create("./log/startuptime.log").expect("Error creating file!");
-            file.write_fmt(format_args!("{:?}", Utc::now())).expect("Error writing to file!");
+            file.write_fmt(format_args!("{:?}", Utc::now()))
+                .expect("Error writing to file!");
         }
     }
     fn resume(&self, _: Context, _: ResumedEvent) {
@@ -61,7 +62,7 @@ impl EventHandler for Handler {
 }
 
 fn main() {
-    let config: Config = Config::get_config(config::CONFIG_PATH);
+    let config = Config::get_config(config::CONFIG_PATH);
     println!("{:?}", config);
 
     let mut client = Client::new(&config.required.token, Handler).expect("Error creating client");
@@ -82,7 +83,6 @@ fn main() {
         }
         Err(why) => panic!("Couldn't get application info: {:?}", why),
     };
-
 
     client.with_framework(
         StandardFramework::new()
@@ -116,25 +116,24 @@ fn main() {
             .command("undeafen", |c| c.cmd(commands::voice::undeafen)),
     );
 
-    thread::spawn(move || {
-        loop {
-            thread::sleep(Duration::from_secs(30));
+    thread::spawn(move || loop {
+        thread::sleep(Duration::from_secs(30));
 
-            let lock = manager.lock();
-            let shard_runners = lock.runners.lock();
+        let lock = manager.lock();
+        let shard_runners = lock.runners.lock();
 
-            for (id, runner) in shard_runners.iter() {
-                println!(
-                    "Shard ID {} is {} with a latency of {:?}",
-                    id,
-                    runner.stage,
-                    runner.latency,
-                );
-            }
+        for (id, runner) in shard_runners.iter() {
+            println!(
+                "Shard ID {} is {} with a latency of {:?}",
+                id, runner.stage, runner.latency,
+            );
         }
     });
 
-    if let Err(why) = client.start_shards(2).map_err(|why| println!("Client ended: {:?}", why)) {
+    if let Err(why) = client
+        .start_shards(2)
+        .map_err(|why| println!("Client ended: {:?}", why))
+    {
         println!("Client error: {:?}", why);
     }
 }
