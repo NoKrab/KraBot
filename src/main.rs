@@ -46,18 +46,18 @@ impl EventHandler for Handler {
                 "{} is connected on shard {}/{}!",
                 ready.user.name, shard[0], shard[1],
             );
-            println!("auweia {}", shard[0]);
             let sqlite_path = Config::get_sqlite_path(config::CONFIG_PATH);
             let con = sqlite::create_connection(sqlite_path);
-            let con = sqlite::test(con);
-            let con = sqlite::test2(con, shard[0], ready.user.name, Utc::now().to_string());
-            //this is actually a terrible idea
-            if !Path::new("./log").exists() {
-                fs::create_dir("./log").expect("Error creating folder")
-            };
-            let mut file = File::create("./log/startuptime.log").expect("Error creating file!");
-            file.write_fmt(format_args!("{:?}", Utc::now()))
-                .expect("Error writing to file!");
+            let con = sqlite::create_bot_table(con);
+            let _ =
+                sqlite::insert_timestamp(con, shard[0], ready.user.name, Utc::now().to_string());
+            // this is actually a terrible idea
+            // if !Path::new("./log").exists() {
+            //     fs::create_dir("./log").expect("Error creating folder")
+            // };
+            // let mut file = File::create("./log/startuptime.log").expect("Error creating file!");
+            // file.write_fmt(format_args!("{:?}", Utc::now()))
+            //     .expect("Error writing to file!");
         }
     }
     fn resume(&self, _: Context, _: ResumedEvent) {

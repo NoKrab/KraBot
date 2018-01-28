@@ -20,7 +20,7 @@ pub fn create_connection((path, loc): (String, String)) -> Connection {
     con
 }
 
-pub fn test(con: Connection) -> Connection {
+pub fn create_bot_table(con: Connection) -> Connection {
     con.execute(
         "CREATE TABLE IF NOT EXISTS bot (
                 id          INTEGER PRIMARY KEY,
@@ -32,18 +32,13 @@ pub fn test(con: Connection) -> Connection {
     con
 }
 
-pub fn test2(con: Connection, id: u64, name: String, timestamp: String) -> Connection {
-    con.execute("INSERT OR IGNORE INTO bot(id, name, timestamp)
-                        VALUES ($1, $2, $3)",
-                        &[&id.to_string(), &name, &timestamp],
+pub fn insert_timestamp(con: Connection, id: u64, name: String, timestamp: String) -> Connection {
+    con.execute(
+        "INSERT OR REPLACE INTO bot(id, name, timestamp) VALUES ($1, $2, $3)",
+        &[&id.to_string(), &name, &timestamp],
     ).unwrap();
-    // UPDATE my_table SET age = 34 WHERE name='Karen'
-    // con.execute("UPDATE bot SET timestamp=$2 WHERE id=$1
-    //                 VALUES ($1, $2)",
-    //             &[&id.to_string(), &timestamp],
-    // ).unwrap();
     con
-} 
+}
 
 pub fn execute_statement() {
     let conn = Connection::open("./db/rsbot.db").unwrap();
