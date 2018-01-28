@@ -32,7 +32,7 @@ impl Config {
         let mut br = BufReader::new(f);
         br.read_to_string(&mut config)
             .expect("Unable to read string");
-        println!("{}", config);
+        // println!("{}", config);
         let mut config: Config = toml::from_str(&config).unwrap();
         if config.optional.database_name == None {
             config = Config::default_db(config);
@@ -50,9 +50,10 @@ impl Config {
         let config = Config::read_config(path);
         config
     }
-    pub fn get_sqlite_path(path: &str) -> String {
+    pub fn get_sqlite_path(path: &str) -> (String, String) {
         let config = Config::read_config(path);
         let mut path = config.required.sqlite_path;
+        let clone = path.clone();
         let db_name = config.optional.database_name.as_ref().unwrap();
         let trailing_char = path.chars().nth(path.len() - 1).unwrap();
         match trailing_char {
@@ -60,6 +61,6 @@ impl Config {
             _ => path.push_str("/"),
         }
         let path = path + db_name;
-        path
+        (path, clone)
     }
 }
