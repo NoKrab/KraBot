@@ -9,6 +9,8 @@ extern crate serenity;
 extern crate time;
 extern crate toml;
 extern crate typemap;
+#[macro_use]
+extern crate lazy_static;
 
 mod config;
 mod commands;
@@ -33,6 +35,12 @@ use serenity::prelude::*;
 use serenity::http;
 use chrono::prelude::*;
 
+// What actual use does this bring?
+lazy_static! {
+    static ref CONFIG: Config = Config::get_config(config::CONFIG_PATH);
+    static ref SQLITE_PATH: (String, String) = Config::get_sqlite_path(config::CONFIG_PATH);
+}
+
 struct Handler;
 
 impl EventHandler for Handler {
@@ -46,11 +54,15 @@ impl EventHandler for Handler {
                 "{} is connected on shard {}/{}!",
                 ready.user.name, shard[0], shard[1],
             );
-            let sqlite_path = Config::get_sqlite_path(config::CONFIG_PATH);
-            let con = sqlite::create_connection(sqlite_path);
+            let con = sqlite::create_connection(&*SQLITE_PATH);
             let con = sqlite::create_bot_table(con);
-            let _ =
-                sqlite::insert_timestamp(con, shard[0], ready.user.name, Utc::now().to_string());
+            let con = sqlite::insert_timestamp(
+                con,
+                shard[0],
+                ready.user.name,
+                Utc::now().to_owned().to_string(),
+            );
+            let _ = con.close().expect("Failed to close connection");
             // this is actually a terrible idea
             // if !Path::new("./log").exists() {
             //     fs::create_dir("./log").expect("Error creating folder")
@@ -65,11 +77,15 @@ impl EventHandler for Handler {
     }
 }
 
-fn main() {
-    let config = Config::get_config(config::CONFIG_PATH);
-    println!("{:?}", config);
 
-    let mut client = Client::new(&config.required.token, Handler).expect("Error creating client");
+fn main() {
+//    let config = Config::get_config(config::CONFIG_PATH);
+//    println!("{:?}", config);
+    println!("Configuration file: {:?}", *CONFIG);
+    println!("SQLITE PATH: {:?}", *SQLITE_PATH);
+    static SHARDS: u64 = 2;
+
+    let mut client = Client::new(&CONFIG.required.token, Handler).expect("Error creating client");
 
     let manager = client.shard_manager.clone();
 
@@ -90,8 +106,8 @@ fn main() {
 
     client.with_framework(
         StandardFramework::new()
-            .configure(|c| c.owners(owners).prefix(&config.required.prefix)
-                .on_mention(config.required.mention)) //the trait does not accept a reference
+            .configure(|c| c.owners(owners).prefix(&CONFIG.required.prefix)
+                .on_mention(CONFIG.required.mention)) //the trait does not accept a reference
             .before(|_, _m, cmd_name| {
                 println!("{:?}", _m);
                 println!("Running command {}", cmd_name);
@@ -135,7 +151,7 @@ fn main() {
     });
 
     if let Err(why) = client
-        .start_shards(2)
+        .start_shards(SHARDS)
         .map_err(|why| println!("Client ended: {:?}", why))
     {
         println!("Client error: {:?}", why);

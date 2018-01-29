@@ -2,6 +2,7 @@
 token = "lorem_ipsum_token_insert_here"
 prefix = "!"
 mention = true #should the bot react on mention?
+shards = 1
 sqlite_path = "./db/"
 
 [optional]

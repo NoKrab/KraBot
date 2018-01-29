@@ -12,7 +12,7 @@ struct Person {
     data: Option<Vec<u8>>,
 }
 
-pub fn create_connection((path, loc): (String, String)) -> Connection {
+pub fn create_connection(&(ref path, ref loc): &(String, String)) -> Connection {
     if !Path::new(&loc).exists() {
         fs::create_dir_all(loc).expect("Error creating directory");
     }
@@ -23,9 +23,10 @@ pub fn create_connection((path, loc): (String, String)) -> Connection {
 pub fn create_bot_table(con: Connection) -> Connection {
     con.execute(
         "CREATE TABLE IF NOT EXISTS bot (
-                id          INTEGER PRIMARY KEY,
-                name        TEXT NOT NULL,
-                timestamp   TEXT NOT NULL
+                id                  INTEGER PRIMARY KEY,
+                name                TEXT NOT NULL,
+                time_created        TEXT NOT NULL,
+                chrono_timestamp    TEXT NOT NULL
                 )",
         &[],
     ).unwrap();
@@ -33,22 +34,25 @@ pub fn create_bot_table(con: Connection) -> Connection {
 }
 
 pub fn insert_timestamp(con: Connection, id: u64, name: String, timestamp: String) -> Connection {
+    let t = time::get_time();
     con.execute(
-        "INSERT OR REPLACE INTO bot(id, name, timestamp) VALUES ($1, $2, $3)",
-        &[&id.to_string(), &name, &timestamp],
+        "INSERT OR REPLACE INTO bot(id, name, time_created, chrono_timestamp) VALUES ($1, $2, $3, $4)",
+        &[&id.to_string(), &name, &t, &timestamp],
     ).unwrap();
     con
 }
 
+//pub fn get_timestamp(con: Connection) -> (Connection, String[], String[]) {
+//let mut stmt
+//let timestamp = [String::from("Kappa"), String: from("Keppo")];
+//let id = [0, 1];
+//(con, id[], timestamp[])
+//}
+
 pub fn execute_statement() {
     let conn = Connection::open("./db/rsbot.db").unwrap();
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS person (
-                  id              INTEGER PRIMARY KEY,
-                  name            TEXT NOT NULL,
-                  time_created    TEXT NOT NULL,
-                  data            BLOB
-                  )",
+        "CREATE TABLE IF NOT EXISTS person (id INTEGER PRIMARY KEY, name TEXT NOT NULL, time_created TEXT NOT NULL, data BLOB)",
         &[],
     ).unwrap();
     let me = Person {

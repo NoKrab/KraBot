@@ -1,4 +1,6 @@
 use toml;
+use std::path::Path;
+use std::fs;
 use std::fs::File;
 use std::io::{BufReader, Read};
 
@@ -15,11 +17,13 @@ pub struct Required {
     pub token: String,
     pub prefix: String,
     pub mention: bool,
+    pub shards: u64,
     pub sqlite_path: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Optional {
+    pub shards: Option<u64>,
     pub database_name: Option<String>,
     pub setting: Option<bool>,
 }
@@ -28,7 +32,13 @@ impl Config {
     fn read_config(path: &str) -> Config {
         let mut config = String::new();
 
-        let f = File::open(path).expect("Unable to open file");
+        // TODO catch open file errors
+        if !Path::new(&CONFIG_PATH).exists() {
+            fs::copy("./config/config_example.toml", &CONFIG_PATH).expect("Error copying file");
+            println!("I created the config.toml for you, please be sure to insert your token accordingly!");
+            ::std::process::exit(0);
+        }
+        let f = File::open(path).expect("Unable to open config.toml file");
         let mut br = BufReader::new(f);
         br.read_to_string(&mut config)
             .expect("Unable to read string");
