@@ -23,7 +23,6 @@ pub struct Required {
 
 #[derive(Debug, Deserialize)]
 pub struct Optional {
-    pub shards: Option<u64>,
     pub database_name: Option<String>,
     pub setting: Option<bool>,
 }
