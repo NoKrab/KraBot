@@ -62,7 +62,8 @@ impl EventHandler for Handler {
                 ready.user.name,
                 Utc::now().to_owned().to_string(),
             );
-            let _ = con.close().expect("Failed to close connection");
+            let _ = sqlite::get_timestamp(con);
+//            let _ = con.close().expect("Failed to close connection");
             // this is actually a terrible idea
             // if !Path::new("./log").exists() {
             //     fs::create_dir("./log").expect("Error creating folder")
@@ -85,7 +86,7 @@ fn main() {
     println!("SQLITE PATH: {:?}", *SQLITE_PATH);
     static SHARDS: u64 = 2;
 
-    let mut client = Client::new(&CONFIG.required.token, Handler).expect("Error creating client");
+    let mut client = Client::new(&*CONFIG.required.token, Handler).expect("Error creating client");
 
     let manager = client.shard_manager.clone();
 
@@ -106,7 +107,7 @@ fn main() {
 
     client.with_framework(
         StandardFramework::new()
-            .configure(|c| c.owners(owners).prefix(&CONFIG.required.prefix)
+            .configure(|c| c.owners(owners).prefix(&*CONFIG.required.prefix)
                 .on_mention(CONFIG.required.mention)) //the trait does not accept a reference
             .before(|_, _m, cmd_name| {
                 println!("{:?}", _m);
@@ -153,7 +154,7 @@ fn main() {
     if let Err(why) = client
         .start_shards(SHARDS)
         .map_err(|why| println!("Client ended: {:?}", why))
-    {
-        println!("Client error: {:?}", why);
-    }
+        {
+            println!("Client error: {:?}", why);
+        }
 }

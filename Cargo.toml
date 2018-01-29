@@ -22,4 +22,4 @@ features = ["cache", "framework", "standard_framework", "voice"]
 
 [dependencies.rusqlite]
 version = "0.11.0"
-features = ["bundled"]
+features = ["bundled", "chrono"]
