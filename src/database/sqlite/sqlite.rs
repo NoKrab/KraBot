@@ -22,12 +22,7 @@ pub fn create_connection(&(ref path, ref loc): &(String, String)) -> Connection 
 
 pub fn create_bot_table(con: Connection) -> Connection {
     con.execute(
-        "CREATE TABLE IF NOT EXISTS bot (
-                id                  INTEGER PRIMARY KEY,
-                name                TEXT NOT NULL,
-                time_created        TEXT NOT NULL,
-                chrono_timestamp    TEXT NOT NULL
-                )",
+        "CREATE TABLE IF NOT EXISTS bot (id INTEGER PRIMARY KEY, name TEXT NOT NULL, time_created TEXT NOT NULL, chrono_timestamp TEXT NOT NULL)",
         &[],
     ).unwrap();
     con
@@ -43,7 +38,8 @@ pub fn insert_timestamp(con: Connection, id: u64, name: String, timestamp: Strin
 }
 
 pub fn get_timestamp(con: Connection) {
-    let mut stmt = con.prepare("SELECT id, name, time_created, chrono_timestamp FROM bot").unwrap();
+    let mut stmt = con.prepare("SELECT id, name, time_created, chrono_timestamp FROM bot")
+        .unwrap();
     let bot_iter = stmt.query_map(&[], |row| Bot {
         id: row.get(0),
         name: row.get(1),

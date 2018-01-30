@@ -3,6 +3,7 @@ use std::path::Path;
 use std::fs;
 use std::fs::File;
 use std::io::{BufReader, Read};
+use serenity::client::validate_token;
 
 pub const CONFIG_PATH: &str = "./config/config.toml";
 
@@ -42,7 +43,18 @@ impl Config {
         br.read_to_string(&mut config)
             .expect("Unable to read string");
         // println!("{}", config);
-        let mut config: Config = toml::from_str(&config).unwrap();
+        // let mut config: Config = toml::from_str(&config).unwrap();
+        let mut config: Config = match toml::from_str(&config) {
+            Ok(config) => config,
+            Err(why) => panic!(
+                "Something bad has happened! Check your config.toml. Error Message: {:?}",
+                why
+            ),
+        };
+        match validate_token(&config.required.token) {
+            Err(_) => panic!("Token is invalid"),
+            Ok(()) => (),
+        };
         if config.optional.database_name == None {
             config = Config::default_db(config);
         } else if config.optional.database_name.as_ref().unwrap().is_empty() {
@@ -63,13 +75,16 @@ impl Config {
         let config = Config::read_config(path);
         let mut path = config.required.sqlite_path;
         let clone = path.clone();
-        let db_name = config.optional.database_name.as_ref().unwrap();
+        let db_name = config
+            .optional
+            .database_name
+            .unwrap_or(String::from("rsbot.db"));
         let trailing_char = path.chars().nth(path.len() - 1).unwrap();
         match trailing_char {
             '/' => (),
             _ => path.push_str("/"),
         }
-        let path = path + db_name;
+        let path = path + &db_name;
         (path, clone)
     }
 }
