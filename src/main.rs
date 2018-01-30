@@ -128,6 +128,7 @@ fn main() {
             .command("fib", |c| c.cmd(commands::math::fibonacci))
             .command("uptime", |c| c.cmd(commands::meta::uptime))
             .command("quit", |c| c.cmd(commands::owner::quit).owners_only(true))
+            .command("clear", |c| c.cmd(commands::owner::clear).owners_only(true))
             .command("join", |c| c.cmd(commands::voice::join))
             .command("leave", |c| c.cmd(commands::voice::leave))
             .command("play", |c| c.cmd(commands::voice::play))
