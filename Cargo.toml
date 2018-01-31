@@ -2,6 +2,10 @@
 name = "rsbot"
 version = "0.3.0"
 authors = ["raymond.mao","daniel.holzner"]
+publish = false
+
+[profile.release]
+lto = true
 
 [dependencies]
 toml = "0.4"

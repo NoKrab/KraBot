@@ -3,6 +3,7 @@ use time::Timespec;
 use std::fs;
 use std::path::Path;
 use rusqlite::Connection;
+use rusqlite::types::FromSql;
 
 #[derive(Debug)]
 struct Bot {
@@ -18,6 +19,17 @@ pub fn create_connection(&(ref path, ref loc): &(String, String)) -> Connection 
     }
     let con = Connection::open(path).unwrap();
     con
+}
+
+pub fn select_shard_uptime(con: Connection, shard: i64) -> Result<Vec<String>, ()> {
+    let mut stmt = con.prepare("SELECT chrono_timestamp FROM bot WHERE id = :id").unwrap();
+    let mut rows = stmt.query_named(&[(":id", &shard)]).unwrap();
+    let mut stamp = Vec::new();
+    while let Some(row) = rows.next() {
+        let row = row.unwrap();
+        stamp.push(row.get(0));
+    }
+    Ok(stamp)
 }
 
 pub fn create_bot_table(con: Connection) -> Connection {

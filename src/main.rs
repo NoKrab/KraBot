@@ -74,8 +74,7 @@ impl EventHandler for Handler {
                 ready.user.name,
                 Utc::now().to_owned().to_string(),
             );
-            let _ = sqlite::get_timestamp(con);
-            //            let _ = con.close().expect("Failed to close connection");
+            let _ = con.close().expect("Failed to close connection");
             // this is actually a terrible idea
             // if !Path::new("./log").exists() {
             //     fs::create_dir("./log").expect("Error creating folder")
@@ -125,10 +124,8 @@ fn main() {
         Err(why) => panic!("Couldn't get application info: {:?}", why),
     };
 
-    let phramework = StandardFramework::new();
-
     client.with_framework(
-        phramework
+        StandardFramework::new()
             .configure(|c| {
                 c.owners(owners)
                     .prefix(&*CONFIG.required.prefix)
@@ -163,13 +160,16 @@ fn main() {
             .command("uptime", |c| c.cmd(commands::meta::uptime))
             .command("quit", |c| c.cmd(commands::owner::quit).owners_only(true))
             .command("clear", |c| c.cmd(commands::owner::clear).owners_only(true))
-            .command("join", |c| c.cmd(commands::voice::join))
-            .command("leave", |c| c.cmd(commands::voice::leave))
-            .command("play", |c| c.cmd(commands::voice::play))
-            .command("mute", |c| c.cmd(commands::voice::mute))
-            .command("unmute", |c| c.cmd(commands::voice::unmute))
-            .command("deafen", |c| c.cmd(commands::voice::deafen))
-            .command("undeafen", |c| c.cmd(commands::voice::undeafen)),
+            .group("Voice", |g| {
+                g.command("join", |c| c.cmd(commands::voice::join))
+                    .command("leave", |c| c.cmd(commands::voice::leave))
+                    .command("play", |c| c.cmd(commands::voice::play))
+                    .command("mute", |c| c.cmd(commands::voice::mute))
+                    .command("unmute", |c| c.cmd(commands::voice::unmute))
+                    .command("deafen", |c| c.cmd(commands::voice::deafen))
+                    .command("undeafen", |c| c.cmd(commands::voice::undeafen))
+            })
+            .command("commands", |c| c.cmd(commands::meta::commands)),
     );
 
     thread::spawn(move || loop {
@@ -189,7 +189,7 @@ fn main() {
     if let Err(why) = client
         .start_shards(CONFIG.required.shards)
         .map_err(|why| println!("Client ended: {:?}", why))
-    {
-        println!("Client error: {:?}", why);
-    }
+        {
+            println!("Client error: {:?}", why);
+        }
 }
