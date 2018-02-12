@@ -1,6 +1,5 @@
 use CONFIG;
 use SQLITE_PATH;
-use chrono::DateTime;
 use database::sqlite::sqlite;
 use CommandCounter;
 use std::fmt::Write;
@@ -12,8 +11,8 @@ command!(ping(_ctx, msg) {
 
 command!(uptime(_ctx, msg) {
     let con = sqlite::create_connection(&*SQLITE_PATH);
-    let stm = sqlite::select_shard_uptime(con, _ctx.shard_id as i64).unwrap();
-//    let stempel = DateTime::parse_from_str(&stm[0], "%F %T%.9f %Z").unwrap();
+    let stm = sqlite::select_shard_uptime(&con, _ctx.shard_id as i64).unwrap();
+    let _ = con.close().expect("Failed to close connection");
     debug!("{}", stm);
     let _ = msg.channel_id.say(&format!("Uptime! Initial Connection time: {:#?}", stm));
 });

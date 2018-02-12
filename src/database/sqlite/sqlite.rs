@@ -31,7 +31,10 @@ pub fn create_connection(&(ref path, ref loc): &(String, String)) -> Connection 
     con
 }
 
-pub fn select_shard_uptime(con: Connection, shard: i64) -> Result<time::Duration, rusqlite::Error> {
+pub fn select_shard_uptime(
+    con: &Connection,
+    shard: i64,
+) -> Result<time::Duration, rusqlite::Error> {
     let mut stmt = con.prepare("SELECT chrono_timestamp FROM bot WHERE id = :id")?;
     let mut rows = stmt.query_named(&[(":id", &shard)])?;
     let mut stamp: Vec<String> = Vec::new();
