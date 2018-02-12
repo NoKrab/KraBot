@@ -15,7 +15,6 @@ impl Key for VoiceManager {
     type Value = Arc<Mutex<ClientVoiceManager>>;
 }
 
-
 command!(deafen(ctx, msg) {
     let guild_id = match CACHE.read().guild_channel(msg.channel_id) {
         Some(channel) => channel.read().guild_id,
