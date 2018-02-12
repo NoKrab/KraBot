@@ -68,12 +68,7 @@ impl EventHandler for Handler {
             );
             let con = sqlite::create_connection(&*SQLITE_PATH);
             sqlite::create_bot_table(&con);
-            sqlite::insert_timestamp(
-                &con,
-                shard[0],
-                ready.user.name,
-                Utc::now().to_owned().to_string(),
-            );
+            sqlite::insert_timestamp(&con, shard[0], ready.user.name);
             let _ = con.close().expect("Failed to close connection");
             // this is actually a terrible idea
             // if !Path::new("./log").exists() {

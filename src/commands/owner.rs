@@ -8,15 +8,15 @@ command!(quit(ctx, msg, _args) {
 
 command!(clear(_ctx, msg, _args) {
     let channel_id = msg.channel_id.0;
-    println!("ChannelID: {:#?}", channel_id);
+    debug!("ChannelID: {:#?}", channel_id);
 //    let channel_num = channel_id as u64;
     let _messages = match  http::get_messages(channel_id, &"/search?content=clear") {
         Ok(msgs) =>  {
-            println!("Messages: {:#?}", msgs);
+            info!("Messages: {:#?}", msgs);
             msgs
         },
         Err(_) => {
-            println!("No messages found!");
+            error!("No messages found!");
             return Ok(());
         }
     };
