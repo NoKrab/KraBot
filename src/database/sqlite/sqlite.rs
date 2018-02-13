@@ -39,7 +39,7 @@ pub fn select_shard_uptime(
     }
     if !stamp.is_empty() {
         let duration = Utc::now().signed_duration_since(stamp[0].parse::<DateTime<Utc>>().expect("Failed parsing timestamp"));
-        return Ok(duration)
+        Ok(duration)
     } else {
         error!("Could not retrieve timestamp");
         Ok(Duration::seconds(0))

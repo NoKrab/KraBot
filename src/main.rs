@@ -27,19 +27,14 @@ use std::collections::HashMap;
 // use std::fs::File;
 // use std::io::Write;
 use std::path::Path;
-//use std::time::Duration;
 use chrono::prelude::*;
-use chrono::Duration;
 use serenity::prelude::*;
 use serenity::prelude::Mutex;
 use serenity::framework::StandardFramework;
-use serenity::framework::standard::{help_commands, Args, CommandOptions, DispatchError,
-                                    HelpBehaviour};
-use serenity::model::Permissions;
+use serenity::framework::standard::DispatchError;
 use serenity::model::event::ResumedEvent;
 use serenity::model::gateway::Ready;
-use serenity::model::channel::Message;
-use serenity::client::bridge::gateway::{ShardId, ShardManager};
+use serenity::client::bridge::gateway::ShardManager;
 use serenity::http;
 use typemap::Key;
 
