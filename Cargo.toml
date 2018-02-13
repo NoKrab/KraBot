@@ -15,7 +15,6 @@ log = "0.4"
 fern = "0.5"
 typemap = "0.3"
 chrono = { version = "0.4", features = ["serde"] }
-time = "0.1"
 
 [dependencies.lazy_static]
 version = "1.0"

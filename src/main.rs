@@ -9,7 +9,6 @@ extern crate rusqlite;
 extern crate serde_derive;
 #[macro_use]
 extern crate serenity;
-extern crate time;
 extern crate toml;
 extern crate typemap;
 
@@ -21,15 +20,16 @@ use config::Config;
 use database::sqlite::sqlite;
 use commands::voice::VoiceManager;
 
-use std::{fs, thread};
+use std::{fs, thread, time};
 use std::sync::Arc;
 use std::collections::HashSet;
 use std::collections::HashMap;
 // use std::fs::File;
 // use std::io::Write;
 use std::path::Path;
-use std::time::Duration;
+//use std::time::Duration;
 use chrono::prelude::*;
+use chrono::Duration;
 use serenity::prelude::*;
 use serenity::prelude::Mutex;
 use serenity::framework::StandardFramework;
@@ -68,7 +68,7 @@ impl EventHandler for Handler {
             );
             let con = sqlite::create_connection(&*SQLITE_PATH);
             sqlite::create_bot_table(&con);
-            sqlite::insert_timestamp(&con, shard[0], ready.user.name);
+            sqlite::insert_timestamp(&con, shard[0] as i64, ready.user.name);
             let _ = con.close().expect("Failed to close connection");
             // this is actually a terrible idea
             // if !Path::new("./log").exists() {
@@ -175,7 +175,7 @@ fn main() {
     );
 
     thread::spawn(move || loop {
-        thread::sleep(Duration::from_secs(30));
+        thread::sleep(time::Duration::from_secs(30));
 
         let lock = manager.lock();
         let shard_runners = lock.runners.lock();
