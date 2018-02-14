@@ -26,4 +26,4 @@ features = ["builder", "cache", "client" ,"framework", "gateway", "http", "model
 
 [dependencies.rusqlite]
 version = "0.13"
-features = ["bundled", "chrono"]
+features = ["chrono"]
