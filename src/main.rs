@@ -16,6 +16,7 @@ mod config;
 mod commands;
 mod database;
 
+
 use config::Config;
 use database::sqlite::sqlite;
 use commands::voice::VoiceManager;
@@ -37,6 +38,7 @@ use serenity::model::gateway::Ready;
 use serenity::client::bridge::gateway::ShardManager;
 use serenity::http;
 use typemap::Key;
+
 
 // What actual use does this bring?
 lazy_static! {
@@ -157,6 +159,9 @@ fn main() {
             .command("uptime", |c| c.cmd(commands::meta::uptime))
             .command("quit", |c| c.cmd(commands::owner::quit).owners_only(true))
             .command("clear", |c| c.cmd(commands::owner::clear).owners_only(true))
+            .command("host", |c| c.cmd(commands::owner::host).owners_only(true))
+            .command("save", |c| c.cmd(commands::owner::save).owners_only(true))
+            .command("load", |c| c.cmd(commands::owner::load).owners_only(true))
             .group("Voice", |g| {
                 g.command("join", |c| c.cmd(commands::voice::join))
                     .command("leave", |c| c.cmd(commands::voice::leave))
@@ -195,7 +200,12 @@ fn setup_logger() -> Result<(), fern::InitError> {
     if !Path::new("./log").exists() {
         fs::create_dir("./log").expect("Error creating folder")
     };
-    fern::Dispatch::new()
+
+    let file_config = fern::Dispatch::new()
+        .level(log::LevelFilter::Error)
+        .chain(fern::log_file("./log/rust.log")?);
+
+    let stdout_config = fern::Dispatch::new()
         .format(|out, message, record| {
             out.finish(format_args!(
                 "{}[{}][{}] {}",
@@ -206,8 +216,12 @@ fn setup_logger() -> Result<(), fern::InitError> {
             ))
         })
         .level(log::LevelFilter::Debug)
-        .chain(std::io::stdout())
-        .chain(fern::log_file("./log/output.log")?)
-        .apply()?;
+        .chain(std::io::stdout());
+
+    stdout_config.chain(file_config).apply()?;
+
+        debug!("Debug output enabled.");
+        error!("Error output enabled.");
+        info!("Info output enabled.");
     Ok(())
 }
