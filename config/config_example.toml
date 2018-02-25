@@ -1,7 +1,10 @@
 [required]
 token = "lorem_ipsum_token_insert_here"
 prefix = "!"
-owner_id = 1337
+mention = true #should the bot react on mention?
+shards = 1
+sqlite_path = "./db/"
 
 [optional]
+#database_name = "" # defaults to rsbot.db if nothing is entered
 setting = true

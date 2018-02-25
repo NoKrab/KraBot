@@ -20,9 +20,11 @@ command!(fibonacci(_ctx, msg, args) {
     let _ = msg.channel_id.say(msg_content);
 });
 
-fn fib(n: u32) -> u32 {
-    if n <= 1 {
-        return n;
+fn fib(n: u64) -> u64 {
+    if n == 1 {
+        return 1;
+    } else if n == 0 {
+        return 0;
     } else {
         fib(n - 1) + fib(n - 2)
     }
