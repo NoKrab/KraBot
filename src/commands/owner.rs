@@ -1,4 +1,4 @@
-extern crate transient_hashmap;
+use transient_hashmap;
 
 use std::io::{self, Write};
 use self::transient_hashmap::TransientHashMap;
