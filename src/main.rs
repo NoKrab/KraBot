@@ -11,6 +11,13 @@ extern crate serde_derive;
 extern crate serenity;
 extern crate toml;
 extern crate typemap;
+extern crate futures;
+extern crate hyper;
+extern crate hyper_tls;
+extern crate tokio_core;
+extern crate serde_json;
+extern crate transient_hashmap;
+
 
 mod config;
 mod commands;
@@ -170,6 +177,7 @@ fn main() {
                     .command("unmute", |c| c.cmd(commands::voice::unmute))
                     .command("deafen", |c| c.cmd(commands::voice::deafen))
                     .command("undeafen", |c| c.cmd(commands::voice::undeafen))
+                    .command("search", |c| c.cmd(commands::voice::search))
             })
             .command("commands", |c| c.cmd(commands::meta::commands)),
     );
@@ -181,10 +189,10 @@ fn main() {
         let shard_runners = lock.runners.lock();
 
         for (id, runner) in shard_runners.iter() {
-            debug!(
-                "Shard ID {} is {} with a latency of {:?}",
-                id, runner.stage, runner.latency,
-            );
+//            debug!(
+//                "Shard ID {} is {} with a latency of {:?}",
+//                id, runner.stage, runner.latency,
+//            );
         }
     });
 
