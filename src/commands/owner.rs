@@ -1,12 +1,6 @@
-extern crate futures;
-extern crate hyper;
-extern crate tokio_core;
-extern crate transient_hashmap;
+use transient_hashmap;
 
 use std::io::{self, Write};
-use self::futures::{Future, Stream};
-use self::hyper::Client;
-use self::tokio_core::reactor::Core;
 use self::transient_hashmap::TransientHashMap;
 use std::sync::Mutex;
 use serenity::http;
@@ -47,7 +41,7 @@ command!(save(ctx, msg, args) {
 command!(load(ctx, msg, args) {
        SAVES.lock().unwrap().prune();
         // Maybe the item is still there or maybe not  ¯\_(ツ)_/¯
-       if(SAVES.lock().unwrap().contains_key(&msg.author.id)) {
+       if SAVES.lock().unwrap().contains_key(&msg.author.id) {
             let _ = msg.reply(SAVES.lock().unwrap().get(&msg.author.id).unwrap());
             let remaining_lifetime = SAVES.lock().unwrap().remaining_lifetime(&msg.author.id).unwrap().to_string();
             let _ = msg.reply(&remaining_lifetime);

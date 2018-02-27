@@ -1,4 +1,17 @@
+use serde_json;
+use std::collections::HashMap;
+use std::mem;
+use serenity::model::id::UserId;
+use transient_hashmap::TransientHashMap;
 use std::sync::Arc;
+use std::str;
+use std::io::{self, Write};
+use futures::{Future, Stream};
+use hyper::Client;
+use hyper_tls::HttpsConnector;
+use tokio_core::reactor::Core;
+use hyper::{Method, Request};
+use serde_json::Value;
 use typemap::Key;
 use serenity::client::bridge::voice::ClientVoiceManager;
 use serenity::client::CACHE;
@@ -8,11 +21,19 @@ use serenity::voice;
 use serenity::prelude::*;
 use serenity::prelude::Mutex;
 use serenity::Result as SerenityResult;
+use serenity::model::channel::Embed;
+use serenity::utils::Colour;
+
+
 
 pub struct VoiceManager;
 
 impl Key for VoiceManager {
     type Value = Arc<Mutex<ClientVoiceManager>>;
+}
+
+lazy_static! {
+    static ref LINKS: Mutex<TransientHashMap<UserId, &'static str>> = Mutex::new(TransientHashMap::new(5)); //u32, &'static str>
 }
 
 command!(deafen(ctx, msg) {
@@ -253,9 +274,72 @@ command!(unmute(ctx, msg) {
     }
 });
 
+command!(search(_ctx, msg, _args) {
+    let mut core = Core::new()?;
+    let handle = core.handle();
+    let client = Client::configure()
+        .connector(HttpsConnector::new(4, &handle)?)
+        .build(&handle);
+
+    let uri = "https://www.googleapis.com/youtube/v3/search?part=snippet&q=lul&maxResults=5&key=AIzaSyC0YMET9zKtfyF6npTQRheyDR2wL3SYDCY".parse()?;
+    let mut req = Request::new(Method::Get, uri);
+
+    let post = client.request(req).and_then(|res| {
+        println!("GET: {}", res.status());
+
+        res.body().concat2().and_then(move |body| {
+             let v: Value = serde_json::from_slice(&body).map_err(|e| {
+            io::Error::new(
+                io::ErrorKind::Other,
+                e
+            )
+        })?;
+        Ok(v)
+        })
+    });
+    let work = post;
+    let posted = core.run(work).unwrap().to_string();
+    debug!("GET: {:?}", &posted);
+    let serde: Value = serde_json::from_str(&posted)?;
+
+    debug!("GET: {:?}", &serde);
+
+    let s: &'static str = string_to_static_str(posted);
+    let mut links = LINKS.lock();
+    links.insert(msg.author.id, s);
+    info!("{:?}", links.get(&msg.author.id).unwrap());
+    let out = links.get(&msg.author.id).unwrap();
+    let out_serde: Value = serde_json::from_str(&out)?;
+
+//    let _ = msg.channel_id.send_message(&out_serde["items"][0]["snippet"]["thumbnails"]["default"]["url"].to_string());
+    let thumb_url = &out_serde["items"][0]["snippet"]["thumbnails"]["default"]["url"].to_string().replace("\"", "");
+
+    if let Err(why) = msg.channel_id.send_message(|m| m
+                .content("WoW")
+                .embed(|e| e
+                    .title("Youtube Results")
+                    .description("This is a description")
+//                    .thumbnail(|t| t.url(&thumb_url))
+                    .colour(Colour::dark_teal())
+                    .footer(|f| f
+                        .icon_url(&thumb_url)
+                        .text("Some text")))) {
+                println!("Error sending message: {:?}", why);
+            }
+});
+
 /// Checks that a message successfully sent; if not, then logs why to stdout.
 fn check_msg(result: SerenityResult<Message>) {
     if let Err(why) = result {
         println!("Error sending message: {:?}", why);
+    }
+}
+
+fn string_to_static_str(s: String) -> &'static str {
+    unsafe {
+        let ret = mem::transmute(&s as &str);
+        error!("AUWEIA {}", ret);
+        mem::forget(s);
+        ret
     }
 }
