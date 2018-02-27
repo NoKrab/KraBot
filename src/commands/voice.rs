@@ -1,11 +1,10 @@
 use serde_json;
-use std::collections::HashMap;
 use std::mem;
 use serenity::model::id::UserId;
 use transient_hashmap::TransientHashMap;
 use std::sync::Arc;
 use std::str;
-use std::io::{self, Write};
+use std::io;
 use futures::{Future, Stream};
 use hyper::Client;
 use hyper_tls::HttpsConnector;
@@ -21,10 +20,7 @@ use serenity::voice;
 use serenity::prelude::*;
 use serenity::prelude::Mutex;
 use serenity::Result as SerenityResult;
-use serenity::model::channel::Embed;
 use serenity::utils::Colour;
-
-
 
 pub struct VoiceManager;
 

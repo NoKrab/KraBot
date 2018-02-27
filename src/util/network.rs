@@ -30,7 +30,7 @@
 //}
 
 use serde_json;
-use serde_json::Error;
+//use serde_json::Error;
 use serde_json::Value;
 use std::str;
 use std::io;
@@ -50,7 +50,6 @@ pub fn run() {
     req.headers_mut().set(ContentType::json());
     req.headers_mut().set(ContentLength(json.len() as u64));
     req.set_body(json);
-
 
     let oha = String::from("http://httpbin.org/headers");
     let ohastr = &oha[..];
@@ -81,18 +80,14 @@ pub fn run() {
     debug!("{}", komisch.to_string());
     debug!("{}", komisch["headers"]["Host"]);
 
-
     let uri = "http://httpbin.org/ip".parse().unwrap();
     let work = client.get(uri).and_then(|res| {
         debug!("Response: {}", res.status());
 
         res.body().concat2().and_then(move |body| {
-            let v: Value = serde_json::from_slice(&body).map_err(|e| {
-                io::Error::new(
-                    io::ErrorKind::Other,
-                    e,
-                )
-            }).unwrap();
+            let v: Value = serde_json::from_slice(&body)
+                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+                .unwrap();
             debug!("{:?}", v);
             debug!("current IP address is {}", v["origin"]);
             Ok(())

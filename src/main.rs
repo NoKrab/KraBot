@@ -1,5 +1,8 @@
 extern crate chrono;
 extern crate fern;
+extern crate futures;
+extern crate hyper;
+extern crate hyper_tls;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
@@ -7,16 +10,13 @@ extern crate log;
 extern crate rusqlite;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde_json;
 #[macro_use]
 extern crate serenity;
-extern crate toml;
-extern crate typemap;
-extern crate futures;
-extern crate hyper;
-extern crate hyper_tls;
 extern crate tokio_core;
-extern crate serde_json;
+extern crate toml;
 extern crate transient_hashmap;
+extern crate typemap;
 
 mod config;
 mod commands;
@@ -28,7 +28,7 @@ use database::sqlite::sqlite;
 use commands::voice::VoiceManager;
 use util::network;
 
-use std::{fs, thread, time};
+use std::fs;
 use std::sync::Arc;
 use std::collections::HashSet;
 use std::collections::HashMap;
@@ -45,7 +45,6 @@ use serenity::model::gateway::Ready;
 use serenity::client::bridge::gateway::ShardManager;
 use serenity::http;
 use typemap::Key;
-
 
 // What actual use does this bring?
 lazy_static! {
@@ -108,7 +107,7 @@ fn main() {
 
     let mut client = Client::new(&*CONFIG.required.token, Handler).expect("Error creating client");
 
-    let manager = client.shard_manager.clone();
+//    let manager = client.shard_manager.clone();
 
     {
         let mut data = client.data.lock();
@@ -182,19 +181,19 @@ fn main() {
             .command("commands", |c| c.cmd(commands::meta::commands)),
     );
 
-//    thread::spawn(move || loop {
-//        thread::sleep(time::Duration::from_secs(30));
-//
-//        let lock = manager.lock();
-//        let shard_runners = lock.runners.lock();
-//
-//        for (id, runner) in shard_runners.iter() {
-//            debug!(
-//                "Shard ID {} is {} with a latency of {:?}",
-//                id, runner.stage, runner.latency,
-//            );
-//        }
-//    });
+    //    thread::spawn(move || loop {
+    //        thread::sleep(time::Duration::from_secs(30));
+    //
+    //        let lock = manager.lock();
+    //        let shard_runners = lock.runners.lock();
+    //
+    //        for (id, runner) in shard_runners.iter() {
+    //            debug!(
+    //                "Shard ID {} is {} with a latency of {:?}",
+    //                id, runner.stage, runner.latency,
+    //            );
+    //        }
+    //    });
 
     if let Err(why) = client
         .start_shards(CONFIG.required.shards)
@@ -228,8 +227,8 @@ fn setup_logger() -> Result<(), fern::InitError> {
 
     stdout_config.chain(file_config).apply()?;
 
-        debug!("Debug output enabled.");
-        error!("Error output enabled.");
-        info!("Info output enabled.");
+    debug!("Debug output enabled.");
+    error!("Error output enabled.");
+    info!("Info output enabled.");
     Ok(())
 }

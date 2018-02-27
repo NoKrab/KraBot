@@ -1,7 +1,4 @@
-use transient_hashmap;
-
-use std::io::{self, Write};
-use self::transient_hashmap::TransientHashMap;
+use transient_hashmap::TransientHashMap;
 use std::sync::Mutex;
 use serenity::http;
 use std::mem;
@@ -12,7 +9,8 @@ lazy_static! {
 }
 
 fn string_to_static_str(s: String) -> &'static str {
-    unsafe { //auweia
+    unsafe {
+        //auweia
         let ret = mem::transmute(&s as &str);
         mem::forget(s);
         ret
@@ -25,20 +23,20 @@ command!(quit(ctx, msg, _args) {
     let _ = msg.reply("Shutting down!");
 });
 
-command!(save(ctx, msg, args) {
-    let mut to_save = match args.single::<String>() {
+command!(save(_ctx, msg, args) {
+    let _ = match args.single::<String>() {
         Ok(to_save) => {
             let s: &'static str = string_to_static_str(to_save);
             SAVES.lock().unwrap().insert(msg.author.id, s);
         },
         Err(_) => {
-            msg.reply("Nothing to save :thinking:");
+            let _ = msg.reply("Nothing to save :thinking:");
             return Ok(());
         }
     };
 });
 
-command!(load(ctx, msg, args) {
+command!(load(_ctx, msg, _args) {
        SAVES.lock().unwrap().prune();
         // Maybe the item is still there or maybe not  ¯\_(ツ)_/¯
        if SAVES.lock().unwrap().contains_key(&msg.author.id) {
@@ -51,7 +49,7 @@ command!(load(ctx, msg, args) {
 
 });
 
-command!(host(ctx, msg, _args) {
+command!(host(_ctx, _msg, _args) {
 //    let mut core = Core::new()?;
 //    let client = Client::new(&core.handle());
 //

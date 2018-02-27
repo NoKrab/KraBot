@@ -26,10 +26,7 @@ pub fn create_connection(&(ref path, ref loc): &(String, String)) -> Connection 
     con
 }
 
-pub fn select_shard_uptime(
-    con: &Connection,
-    shard: i64,
-) -> Result<Duration, Error> {
+pub fn select_shard_uptime(con: &Connection, shard: i64) -> Result<Duration, Error> {
     let mut stmt = con.prepare("SELECT chrono_timestamp FROM bot WHERE id = :id")?;
     let mut rows = stmt.query_named(&[(":id", &shard)])?;
     let mut stamp: Vec<String> = Vec::new();
@@ -38,7 +35,11 @@ pub fn select_shard_uptime(
         stamp.push(row.get(0));
     }
     if !stamp.is_empty() {
-        let duration = Utc::now().signed_duration_since(stamp[0].parse::<DateTime<Utc>>().expect("Failed parsing timestamp"));
+        let duration = Utc::now().signed_duration_since(
+            stamp[0]
+                .parse::<DateTime<Utc>>()
+                .expect("Failed parsing timestamp"),
+        );
         Ok(duration)
     } else {
         error!("Could not retrieve timestamp");
@@ -55,9 +56,12 @@ pub fn create_bot_table(con: &Connection) {
 
 pub fn insert_timestamp(con: &Connection, id: i64, name: String) {
     let utc = Utc::now();
-    match con.execute("INSERT OR REPLACE INTO bot(id, name, chrono_timestamp) VALUES ($1, $2, $3)", &[&id.to_sql().unwrap(), &name, &utc.to_sql().unwrap()]) {
+    match con.execute(
+        "INSERT OR REPLACE INTO bot(id, name, chrono_timestamp) VALUES ($1, $2, $3)",
+        &[&id.to_sql().unwrap(), &name, &utc.to_sql().unwrap()],
+    ) {
         Ok(i) => info!("Inserted {} row(s)", i),
-        Err(why) => error!("Error: {}", why)
+        Err(why) => error!("Error: {}", why),
     }
 }
 
