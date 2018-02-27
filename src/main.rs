@@ -18,15 +18,15 @@ extern crate tokio_core;
 extern crate serde_json;
 extern crate transient_hashmap;
 
-
 mod config;
 mod commands;
 mod database;
-
+mod util;
 
 use config::Config;
 use database::sqlite::sqlite;
 use commands::voice::VoiceManager;
+use util::network;
 
 use std::{fs, thread, time};
 use std::sync::Arc;
@@ -99,12 +99,12 @@ impl Key for ShardManagerContainer {
 fn main() {
     match setup_logger() {
         Ok(_) => (),
-        Err(why) => eprintln!("Failed to init logger: {}", why),
+        Err(why) => eprintln!("Failed to init logger: {}", why), // Since the logger isn't setup yet, we use eprintln!
     }
-    //    let config = Config::get_config(config::CONFIG_PATH);
-    //    println!("{:?}", config);
     debug!("Configuration file: {:?}", *CONFIG);
     debug!("SQLITE PATH: {:?}", *SQLITE_PATH);
+
+    network::run();
 
     let mut client = Client::new(&*CONFIG.required.token, Handler).expect("Error creating client");
 
@@ -182,19 +182,19 @@ fn main() {
             .command("commands", |c| c.cmd(commands::meta::commands)),
     );
 
-    thread::spawn(move || loop {
-        thread::sleep(time::Duration::from_secs(30));
-
-        let lock = manager.lock();
-        let shard_runners = lock.runners.lock();
-
-        for (id, runner) in shard_runners.iter() {
+//    thread::spawn(move || loop {
+//        thread::sleep(time::Duration::from_secs(30));
+//
+//        let lock = manager.lock();
+//        let shard_runners = lock.runners.lock();
+//
+//        for (id, runner) in shard_runners.iter() {
 //            debug!(
 //                "Shard ID {} is {} with a latency of {:?}",
 //                id, runner.stage, runner.latency,
 //            );
-        }
-    });
+//        }
+//    });
 
     if let Err(why) = client
         .start_shards(CONFIG.required.shards)

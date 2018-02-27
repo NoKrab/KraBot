@@ -1,6 +1,4 @@
-
-extern crate serde_json;
-
+use serde_json;
 use std::collections::HashMap;
 use std::mem;
 use serenity::model::id::UserId;
