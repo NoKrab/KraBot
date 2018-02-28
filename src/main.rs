@@ -103,12 +103,12 @@ fn main() {
     debug!("Configuration file: {:?}", *CONFIG);
     debug!("SQLITE PATH: {:?}", *SQLITE_PATH);
 
-    // yada yada example network
-//    network::run();
+    //yada yada example network
+    //network::run();
 
     let mut client = Client::new(&*CONFIG.required.token, Handler).expect("Error creating client");
 
-    //    let manager = client.shard_manager.clone();
+    // let manager = client.shard_manager.clone();
 
     {
         let mut data = client.data.lock();
@@ -183,19 +183,19 @@ fn main() {
             .command("commands", |c| c.cmd(commands::meta::commands)),
     );
 
-    //    thread::spawn(move || loop {
-    //        thread::sleep(time::Duration::from_secs(30));
-    //
-    //        let lock = manager.lock();
-    //        let shard_runners = lock.runners.lock();
-    //
-    //        for (id, runner) in shard_runners.iter() {
-    //            debug!(
-    //                "Shard ID {} is {} with a latency of {:?}",
-    //                id, runner.stage, runner.latency,
-    //            );
-    //        }
-    //    });
+    /*    thread::spawn(move || loop {
+        thread::sleep(time::Duration::from_secs(30));
+
+        let lock = manager.lock();
+        let shard_runners = lock.runners.lock();
+
+        for (id, runner) in shard_runners.iter() {
+            debug!(
+                "Shard ID {} is {} with a latency of {:?}",
+                id, runner.stage, runner.latency,
+            );
+        }
+    });*/
 
     if let Err(why) = client
         .start_shards(CONFIG.required.shards)
