@@ -25,6 +25,7 @@ pub struct Required {
 #[derive(Debug, Deserialize)]
 pub struct Optional {
     pub database_name: Option<String>,
+    pub youtube_token: Option<String>,
     pub setting: Option<bool>,
 }
 
