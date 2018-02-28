@@ -329,7 +329,7 @@ command!(search(_ctx, msg, _args) {
 command!(test(_ctx, msg, args) {
     let query = str::replace(args.full(), " ", "+");
     debug!("{}", query);
-    youtube_search(query);
+    youtube_search(query, msg);
 //    let _ = msg.channel_id.say(query);
 });
 
@@ -349,7 +349,7 @@ fn string_to_static_str(s: String) -> &'static str {
     }
 }
 
-fn youtube_search(query: String) {
+fn youtube_search(query: String, msg: &Message) {
     let token = match CONFIG.optional.youtube_token {
         Some(ref token) => token.to_owned(),
         None => panic!("no token"), // TODO allow "empty" token
@@ -393,4 +393,20 @@ fn youtube_search(query: String) {
     //    debug!("{}", result["items"]);
     debug!("{}", items.len());
     debug!("{:#?}", items);
+
+    // m is a create_message struct not a Message struct!
+    // e is a create_embed struct
+    let _ = msg.channel_id.send_message(|m| m
+        .content("KONTENT")
+        .embed(|e| e
+            .author(|a| a
+                .name("KinG")
+                .icon_url("http://i0.kym-cdn.com/photos/images/newsfeed/001/339/830/135.png"))
+            .title("HALLO I BIMS EIN TITEL")
+            .thumbnail("http://i0.kym-cdn.com/photos/images/newsfeed/001/326/935/569.png")
+            .description("I BIMS EINE DESKRIPTION")
+            .colour(Colour::dark_teal())
+            .footer(|f| f
+                .icon_url("http://i0.kym-cdn.com/photos/images/newsfeed/001/331/733/acc.png")
+                .text("I BIMS DA FOOTER TECKST ECKS DEE"))));
 }
