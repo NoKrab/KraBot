@@ -333,10 +333,11 @@ command!(test(_ctx, msg, args) {
 //    let _ = msg.channel_id.say(query);
 });
 
-/// Checks that a message successfully sent; if not, then logs why to stdout.
+// Checks that a message successfully sent; if not, then logs why to stdout.
+// Is this even needed?
 fn check_msg(result: SerenityResult<Message>) {
     if let Err(why) = result {
-        println!("Error sending message: {:?}", why);
+        error!("Error sending message: {:?}", why);
     }
 }
 
