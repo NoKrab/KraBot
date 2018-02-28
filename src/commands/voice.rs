@@ -327,7 +327,8 @@ command!(search(_ctx, msg, _args) {
 });
 
 command!(test(_ctx, msg, args) {
-    let query = args.single::<String>().unwrap();
+    let query = str::replace(args.full(), " ", "+");
+    debug!("{}", query);
     youtube_search(query);
 //    let _ = msg.channel_id.say(query);
 });
@@ -364,22 +365,22 @@ fn youtube_search(query: String) {
         "https://www.googleapis.com/youtube/v3/search?part=snippet&q={}&maxResults={}&key={}",
         query, limit, token
     );
-    debug!("{}", uri);
     let uri = &uri[..];
+    debug!("{}", uri);
 
-    let req = Request::new(Method::Get, uri.parse().unwrap());
+    let request = client
+        .request(Request::new(Method::Get, uri.parse().unwrap()))
+        .and_then(|res| {
+            debug!("GET: {}", res.status());
 
-    let post = client.request(req).and_then(|res| {
-        debug!("GET: {}", res.status());
+            res.body().concat2().and_then(move |body| {
+                let v: Value = serde_json::from_slice(&body)
+                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+                Ok(v)
+            })
+        });
 
-        res.body().concat2().and_then(move |body| {
-            let v: Value =
-                serde_json::from_slice(&body).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-            Ok(v)
-        })
-    });
-
-    let result = core.run(post).unwrap();
+    let result = core.run(request).unwrap();
 
     let items = match result["items"].as_array() {
         Some(array) => array.to_owned(),
