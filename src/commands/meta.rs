@@ -1,4 +1,3 @@
-use CONFIG;
 use SQLITE_PATH;
 use database::sqlite::sqlite;
 use CommandCounter;
@@ -19,8 +18,6 @@ command!(uptime(_ctx, msg) {
 
 command!(commands(ctx, msg, _args) {
     let mut contents = "Commands used:\n".to_string();
-    debug!("HALLO {:#?}", &*CONFIG);
-
     let data = ctx.data.lock();
     let counter = data.get::<CommandCounter>().unwrap();
 
