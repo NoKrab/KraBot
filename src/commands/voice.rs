@@ -1,3 +1,4 @@
+use CONFIG;
 use serde_json;
 use std::mem;
 use serenity::model::id::UserId;
@@ -29,7 +30,8 @@ impl Key for VoiceManager {
 }
 
 lazy_static! {
-    static ref LINKS: Mutex<TransientHashMap<UserId, &'static str>> = Mutex::new(TransientHashMap::new(5)); //u32, &'static str>
+//u32, &'static str>
+    static ref LINKS: Mutex<TransientHashMap<UserId, &'static str>> = Mutex::new(TransientHashMap::new(5));
 }
 
 command!(deafen(ctx, msg) {
@@ -324,6 +326,12 @@ command!(search(_ctx, msg, _args) {
             }
 });
 
+command!(test(_ctx, msg, args) {
+    let query = args.single::<String>().unwrap();
+    youtube_search(query);
+//    let _ = msg.channel_id.say(query);
+});
+
 /// Checks that a message successfully sent; if not, then logs why to stdout.
 fn check_msg(result: SerenityResult<Message>) {
     if let Err(why) = result {
@@ -338,4 +346,50 @@ fn string_to_static_str(s: String) -> &'static str {
         mem::forget(s);
         ret
     }
+}
+
+fn youtube_search(query: String) {
+    let token = match CONFIG.optional.youtube_token {
+        Some(ref token) => token.to_owned(),
+        None => panic!("no token"), // TODO allow "empty" token
+    };
+    let limit = 5;
+    let mut core = Core::new().unwrap();
+    let handle = core.handle();
+    let client = Client::configure()
+        .connector(HttpsConnector::new(4, &handle).unwrap())
+        .build(&handle);
+
+    let uri = format!(
+        "https://www.googleapis.com/youtube/v3/search?part=snippet&q={}&maxResults={}&key={}",
+        query, limit, token
+    );
+    debug!("{}", uri);
+    let uri = &uri[..];
+
+    let req = Request::new(Method::Get, uri.parse().unwrap());
+
+    let post = client.request(req).and_then(|res| {
+        debug!("GET: {}", res.status());
+
+        res.body().concat2().and_then(move |body| {
+            let v: Value =
+                serde_json::from_slice(&body).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            Ok(v)
+        })
+    });
+
+    let result = core.run(post).unwrap();
+
+    let items = match result["items"].as_array() {
+        Some(array) => array.to_owned(),
+        None => Vec::new(),
+    };
+
+    //    let items = result["items"].as_array();
+    //    debug!("{:#?}", result);
+    //    debug!("{}", result["etag"]);
+    //    debug!("{}", result["items"]);
+    debug!("{}", items.len());
+    debug!("{:#?}", items);
 }

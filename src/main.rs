@@ -103,11 +103,12 @@ fn main() {
     debug!("Configuration file: {:?}", *CONFIG);
     debug!("SQLITE PATH: {:?}", *SQLITE_PATH);
 
-    network::run();
+    // yada yada example network
+//    network::run();
 
     let mut client = Client::new(&*CONFIG.required.token, Handler).expect("Error creating client");
 
-//    let manager = client.shard_manager.clone();
+    //    let manager = client.shard_manager.clone();
 
     {
         let mut data = client.data.lock();
@@ -177,6 +178,7 @@ fn main() {
                     .command("deafen", |c| c.cmd(commands::voice::deafen))
                     .command("undeafen", |c| c.cmd(commands::voice::undeafen))
                     .command("search", |c| c.cmd(commands::voice::search))
+                    .command("test", |c| c.cmd(commands::voice::test))
             })
             .command("commands", |c| c.cmd(commands::meta::commands)),
     );

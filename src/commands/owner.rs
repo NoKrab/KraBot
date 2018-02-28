@@ -5,7 +5,8 @@ use std::mem;
 use serenity::model::id::UserId;
 
 lazy_static! {
-    static ref SAVES: Mutex<TransientHashMap<UserId, &'static str>> = Mutex::new(TransientHashMap::new(5)); //u32, &'static str>
+    //u32, &'static str>
+    static ref SAVES: Mutex<TransientHashMap<UserId, &'static str>> = Mutex::new(TransientHashMap::new(5));
 }
 
 fn string_to_static_str(s: String) -> &'static str {
