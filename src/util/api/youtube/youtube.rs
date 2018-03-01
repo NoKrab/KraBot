@@ -1,5 +1,5 @@
 use CONFIG;
-use super::super::super::super::commands::voice::YTS;
+use commands::voice::YTS;
 use serde_json;
 use std::io;
 use futures::{Future, Stream};
