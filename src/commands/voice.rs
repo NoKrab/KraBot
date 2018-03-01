@@ -351,6 +351,9 @@ fn string_to_static_str(s: String) -> &'static str {
 }
 
 fn youtube_search(query: String, msg: &Message) {
+    {
+        &*YTS.lock().prune();
+    }
     // Since Option is either None or Some, Some may just contain an empty String
     if let Some(ref token) = CONFIG.optional.youtube_token {
         let token = token.to_owned();
