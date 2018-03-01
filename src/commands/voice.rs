@@ -32,7 +32,7 @@ impl Key for VoiceManager {
 lazy_static! {
 //u32, &'static str
     static ref LINKS: Mutex<TransientHashMap<UserId, &'static str>> = Mutex::new(TransientHashMap::new(5));
-    static ref YTS: Mutex<TransientHashMap<UserId, Vec<Value>>> = Mutex::new(TransientHashMap::new(30));
+    pub static ref YTS: Mutex<TransientHashMap<UserId, Vec<Value>>> = Mutex::new(TransientHashMap::new(30));
 }
 
 command!(deafen(ctx, msg) {
@@ -398,7 +398,10 @@ fn youtube_search(query: String, msg: &Message) {
             debug!("{}", items.len());
             //debug!("{:#?}", items);
             self::push(msg, items);
-            debug!("################### {:?}", YTS.lock().get(&msg.author.id).unwrap());
+            debug!(
+                "################### {:?}",
+                YTS.lock().get(&msg.author.id).unwrap()
+            );
 
             // m is a create_message struct not a Message struct!
             // e is a create_embed struct
@@ -425,6 +428,6 @@ fn youtube_search(query: String, msg: &Message) {
     }
 }
 
-fn push(msg: &Message, vec: Vec<Value>) {
+pub fn push(msg: &Message, vec: Vec<Value>) {
     YTS.lock().insert(msg.author.id, vec);
 }
