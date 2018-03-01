@@ -30,8 +30,9 @@ impl Key for VoiceManager {
 }
 
 lazy_static! {
-//u32, &'static str>
+//u32, &'static str
     static ref LINKS: Mutex<TransientHashMap<UserId, &'static str>> = Mutex::new(TransientHashMap::new(5));
+    static ref YTS: Mutex<TransientHashMap<UserId, Vec<Value>>> = Mutex::new(TransientHashMap::new(30));
 }
 
 command!(deafen(ctx, msg) {
@@ -392,7 +393,9 @@ fn youtube_search(query: String, msg: &Message) {
             //    debug!("{}", result["etag"]);
             //    debug!("{}", result["items"]);
             debug!("{}", items.len());
-            debug!("{:#?}", items);
+            //debug!("{:#?}", items);
+            self::push(msg, items);
+            debug!("################### {:?}", YTS.lock().get(&msg.author.id).unwrap());
 
             // m is a create_message struct not a Message struct!
             // e is a create_embed struct
@@ -417,4 +420,8 @@ fn youtube_search(query: String, msg: &Message) {
     } else {
         let _ = msg.channel_id.say("Missing Youtube token!");
     }
+}
+
+fn push(msg: &Message, vec: Vec<Value>) {
+    YTS.lock().insert(msg.author.id, vec);
 }
