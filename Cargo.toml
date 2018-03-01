@@ -28,6 +28,7 @@ features = ["nightly"]
 
 [dependencies.serenity]
 git = "https://github.com/zeyla/serenity.git"
+branch = "v0.6.x"
 features = ["builder", "cache", "client" ,"framework", "gateway", "http", "model", "standard_framework", "utils", "voice"]
 
 [dependencies.rusqlite]
