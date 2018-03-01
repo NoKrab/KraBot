@@ -7,5 +7,5 @@ sqlite_path = "./db/"
 
 [optional]
 #database_name = "" # defaults to rsbot.db if nothing is entered
-youtube_token = ""
+#youtube_token = ""
 setting = true
