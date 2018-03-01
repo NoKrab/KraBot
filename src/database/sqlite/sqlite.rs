@@ -48,9 +48,12 @@ pub fn select_shard_uptime(con: &Connection, shard: i64) -> Result<Duration, Err
 }
 
 pub fn create_bot_table(con: &Connection) {
-    match con.execute("CREATE TABLE IF NOT EXISTS bot (id INTEGER PRIMARY KEY UNIQUE, name TEXT NOT NULL, chrono_timestamp TEXT NOT NULL)", &[]) {
+    match con.execute(
+        "CREATE TABLE IF NOT EXISTS bot (id INTEGER PRIMARY KEY UNIQUE, name TEXT NOT NULL, chrono_timestamp TEXT NOT NULL)",
+        &[],
+    ) {
         Ok(_) => (),
-        Err(why) => error!("Error creating bot table: {}", why)
+        Err(why) => error!("Error creating bot table: {}", why),
     }
 }
 

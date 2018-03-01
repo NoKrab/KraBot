@@ -160,27 +160,54 @@ fn main() {
                         .say(&format!("Try this again in {} seconds", seconds));
                 }
             })
-            .command("ping", |c| c.cmd(commands::meta::ping))
-            .command("multiply", |c| c.cmd(commands::math::multiply))
-            .command("fib", |c| c.cmd(commands::math::fibonacci))
-            .command("uptime", |c| c.cmd(commands::meta::uptime))
+            .command("ping", |c| {
+                c.cmd(commands::meta::ping)
+            })
+            .command("multiply", |c| {
+                c.cmd(commands::math::multiply)
+            })
+            .command("fib", |c| {
+                c.cmd(commands::math::fibonacci)
+            })
+            .command("uptime", |c| {
+                c.cmd(commands::meta::uptime)
+            })
             .command("quit", |c| c.cmd(commands::owner::quit).owners_only(true))
             .command("clear", |c| c.cmd(commands::owner::clear).owners_only(true))
             .command("host", |c| c.cmd(commands::owner::host).owners_only(true))
             .command("save", |c| c.cmd(commands::owner::save).owners_only(true))
             .command("load", |c| c.cmd(commands::owner::load).owners_only(true))
             .group("Voice", |g| {
-                g.command("join", |c| c.cmd(commands::voice::join))
-                    .command("leave", |c| c.cmd(commands::voice::leave))
-                    .command("play", |c| c.cmd(commands::voice::play))
-                    .command("mute", |c| c.cmd(commands::voice::mute))
-                    .command("unmute", |c| c.cmd(commands::voice::unmute))
-                    .command("deafen", |c| c.cmd(commands::voice::deafen))
-                    .command("undeafen", |c| c.cmd(commands::voice::undeafen))
-                    .command("search", |c| c.cmd(commands::voice::search))
-                    .command("test", |c| c.cmd(commands::voice::test))
+                g.command("join", |c| {
+                    c.cmd(commands::voice::join)
+                }).command("leave", |c| {
+                        c.cmd(commands::voice::leave)
+                    })
+                    .command("play", |c| {
+                        c.cmd(commands::voice::play)
+                    })
+                    .command("mute", |c| {
+                        c.cmd(commands::voice::mute)
+                    })
+                    .command("unmute", |c| {
+                        c.cmd(commands::voice::unmute)
+                    })
+                    .command("deafen", |c| {
+                        c.cmd(commands::voice::deafen)
+                    })
+                    .command("undeafen", |c| {
+                        c.cmd(commands::voice::undeafen)
+                    })
+                    .command("search", |c| {
+                        c.cmd(commands::voice::search)
+                    })
+                    .command("test", |c| {
+                        c.cmd(commands::voice::test)
+                    })
             })
-            .command("commands", |c| c.cmd(commands::meta::commands)),
+            .command("commands", |c| {
+                c.cmd(commands::meta::commands)
+            }),
     );
 
     /*    thread::spawn(move || loop {
