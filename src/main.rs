@@ -26,7 +26,7 @@ mod util;
 use config::Config;
 use database::sqlite::sqlite;
 use commands::voice::VoiceManager;
-use util::network;
+//use util::network;
 
 use std::fs;
 use std::sync::Arc;
@@ -102,9 +102,6 @@ fn main() {
     }
     debug!("Configuration file: {:?}", *CONFIG);
     debug!("SQLITE PATH: {:?}", *SQLITE_PATH);
-
-    //yada yada example network
-    //network::run();
 
     let mut client = Client::new(&*CONFIG.required.token, Handler).expect("Error creating client");
 
