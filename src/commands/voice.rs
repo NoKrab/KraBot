@@ -2,7 +2,6 @@ use CONFIG;
 use serde_json;
 use std::mem;
 use serenity::model::id::UserId;
-use transient_hashmap::TransientHashMap;
 use std::sync::Arc;
 use std::str;
 use std::io;
@@ -22,6 +21,7 @@ use serenity::prelude::*;
 use serenity::prelude::Mutex;
 use serenity::Result as SerenityResult;
 use serenity::utils::Colour;
+use util::api::youtube::youtube::API;
 
 pub struct VoiceManager;
 
@@ -29,11 +29,11 @@ impl Key for VoiceManager {
     type Value = Arc<Mutex<ClientVoiceManager>>;
 }
 
-lazy_static! {
+//lazy_static! {
 //u32, &'static str
-    static ref LINKS: Mutex<TransientHashMap<UserId, &'static str>> = Mutex::new(TransientHashMap::new(5));
-    pub static ref YTS: Mutex<TransientHashMap<UserId, Vec<Value>>> = Mutex::new(TransientHashMap::new(30));
-}
+//    static ref LINKS: Mutex<TransientHashMap<UserId, &'static str>> = Mutex::new(TransientHashMap::new(5));
+//    pub static ref YTS: Mutex<TransientHashMap<UserId, Vec<Value>>> = Mutex::new(TransientHashMap::new(30));
+//}
 
 command!(deafen(ctx, msg) {
     let guild_id = match CACHE.read().guild_channel(msg.channel_id) {
@@ -273,64 +273,16 @@ command!(unmute(ctx, msg) {
     }
 });
 
-command!(search(_ctx, msg, _args) {
-    let mut core = Core::new()?;
-    let handle = core.handle();
-    let client = Client::configure()
-        .connector(HttpsConnector::new(4, &handle)?)
-        .build(&handle);
-
-    let uri = "https://www.googleapis.com/youtube/v3/search?part=snippet&q=lul&maxResults=5&key=AIzaSyC0YMET9zKtfyF6npTQRheyDR2wL3SYDCY".parse()?;
-    let mut req = Request::new(Method::Get, uri);
-
-    let post = client.request(req).and_then(|res| {
-        println!("GET: {}", res.status());
-
-        res.body().concat2().and_then(move |body| {
-             let v: Value = serde_json::from_slice(&body).map_err(|e| {
-            io::Error::new(
-                io::ErrorKind::Other,
-                e
-            )
-        })?;
-        Ok(v)
-        })
-    });
-    let work = post;
-    let posted = core.run(work).unwrap().to_string();
-    debug!("GET: {:?}", &posted);
-    let serde: Value = serde_json::from_str(&posted)?;
-
-    debug!("GET: {:?}", &serde);
-
-    let s: &'static str = string_to_static_str(posted);
-    let mut links = LINKS.lock();
-    links.insert(msg.author.id, s);
-    info!("{:?}", links.get(&msg.author.id).unwrap());
-    let out = links.get(&msg.author.id).unwrap();
-    let out_serde: Value = serde_json::from_str(&out)?;
-
-//    let _ = msg.channel_id.send_message(&out_serde["items"][0]["snippet"]["thumbnails"]["default"]["url"].to_string());
-    let thumb_url = &out_serde["items"][0]["snippet"]["thumbnails"]["default"]["url"].to_string().replace("\"", "");
-
-    if let Err(why) = msg.channel_id.send_message(|m| m
-                .content("WoW")
-                .embed(|e| e
-                    .title("Youtube Results")
-                    .description("This is a description")
-//                    .thumbnail(|t| t.url(&thumb_url))
-                    .colour(Colour::dark_teal())
-                    .footer(|f| f
-                        .icon_url(&thumb_url)
-                        .text("Some text")))) {
-                println!("Error sending message: {:?}", why);
-            }
+command!(search(_ctx, msg, args) {
+    let query = str::replace(args.full(), " ", "+");
+    debug!("{}", query);
+    API::youtube_search(query, msg);
 });
 
 command!(test(_ctx, msg, args) {
     let query = str::replace(args.full(), " ", "+");
     debug!("{}", query);
-    youtube_search(query, msg);
+    API::youtube_search(query, msg);
 //    let _ = msg.channel_id.say(query);
 });
 
@@ -348,86 +300,4 @@ fn string_to_static_str(s: String) -> &'static str {
         mem::forget(s);
         ret
     }
-}
-
-fn youtube_search(query: String, msg: &Message) {
-    {
-        &*YTS.lock().prune();
-    }
-    // Since Option is either None or Some, Some may just contain an empty String
-    if let Some(ref token) = CONFIG.optional.youtube_token {
-        let token = token.to_owned();
-        debug!("Youtbe API token: {}", token);
-        if !token.is_empty() {
-            let limit = 5;
-            let mut core = Core::new().unwrap();
-            let handle = core.handle();
-            let client = Client::configure()
-                .connector(HttpsConnector::new(4, &handle).unwrap())
-                .build(&handle);
-
-            let uri = format!(
-                "https://www.googleapis.com/youtube/v3/search?part=snippet&q={}&maxResults={}&key={}",
-                query, limit, token
-            );
-            let uri = &uri[..];
-            debug!("{}", uri);
-
-            let request = client
-                .request(Request::new(Method::Get, uri.parse().unwrap()))
-                .and_then(|res| {
-                    debug!("GET: {}", res.status());
-
-                    res.body().concat2().and_then(move |body| {
-                        let v: Value = serde_json::from_slice(&body).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-                        Ok(v)
-                    })
-                });
-
-            let result = core.run(request).unwrap();
-
-            let items = match result["items"].as_array() {
-                Some(array) => array.to_owned(),
-                None => Vec::new(),
-            };
-
-            //    let items = result["items"].as_array();
-            //    debug!("{:#?}", result);
-            //    debug!("{}", result["etag"]);
-            //    debug!("{}", result["items"]);
-            debug!("{}", items.len());
-            //debug!("{:#?}", items);
-            self::push(msg, items);
-            debug!(
-                "################### {:?}",
-                YTS.lock().get(&msg.author.id).unwrap()
-            );
-
-            // m is a create_message struct not a Message struct!
-            // e is a create_embed struct
-            let _ = msg.channel_id.send_message(|m| {
-                m.content("KONTENT").embed(|e| {
-                    e.author(|a| {
-                        a.name("KinG")
-                            .icon_url("http://i0.kym-cdn.com/photos/images/newsfeed/001/339/830/135.png")
-                    }).title("HALLO I BIMS EIN TITEL")
-                        .thumbnail("http://i0.kym-cdn.com/photos/images/newsfeed/001/326/935/569.png")
-                        .description("I BIMS EINE DESKRIPTION")
-                        .colour(Colour::dark_teal())
-                        .footer(|f| {
-                            f.icon_url("http://i0.kym-cdn.com/photos/images/newsfeed/001/331/733/acc.png")
-                                .text("I BIMS DA FOOTER TECKST ECKS DEE")
-                        })
-                })
-            });
-        } else {
-            let _ = msg.channel_id.say("Missing Youtube token!");
-        }
-    } else {
-        let _ = msg.channel_id.say("Missing Youtube token!");
-    }
-}
-
-pub fn push(msg: &Message, vec: Vec<Value>) {
-    YTS.lock().insert(msg.author.id, vec);
 }

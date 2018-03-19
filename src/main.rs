@@ -60,7 +60,7 @@ struct ShardManagerContainer;
 
 impl EventHandler for Handler {
     fn ready(&self, ctx: Context, ready: Ready) {
-        ctx.set_game_name("I bims ein Rust Bot");
+        ctx.set_game_name("I do not work :)");
         if let Some(shard) = ready.shard {
             // Note that array index 0 is 0-indexed, while index 1 is 1-indexed.
             //
