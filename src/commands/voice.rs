@@ -22,6 +22,7 @@ use serenity::prelude::Mutex;
 use serenity::Result as SerenityResult;
 use serenity::utils::Colour;
 use util::api::youtube::youtube::API;
+use regex::Regex;
 
 pub struct VoiceManager;
 
@@ -29,11 +30,12 @@ impl Key for VoiceManager {
     type Value = Arc<Mutex<ClientVoiceManager>>;
 }
 
-//lazy_static! {
+lazy_static! {
 //u32, &'static str
 //    static ref LINKS: Mutex<TransientHashMap<UserId, &'static str>> = Mutex::new(TransientHashMap::new(5));
 //    pub static ref YTS: Mutex<TransientHashMap<UserId, Vec<Value>>> = Mutex::new(TransientHashMap::new(30));
-//}
+    static ref RE_PLAY: Regex = Regex::new(r"^http.+|^[1-5]").unwrap();
+}
 
 command!(deafen(ctx, msg) {
     let guild_id = match CACHE.read().guild_channel(msg.channel_id) {
@@ -183,51 +185,51 @@ command!(mute(ctx, msg) {
 });
 
 command!(play(ctx, msg, args) {
-    let url = match args.single::<String>() {
-        Ok(url) => url,
-        Err(_) => {
-            check_msg(msg.channel_id.say("Must provide a URL to a video or audio"));
+    let args = args.full();
+    if RE_PLAY.is_match(&args) {
+        let url = get_url(&args, &msg.author.id);
 
-            return Ok(());
-        },
-    };
-
-    if !url.starts_with("http") {
-        check_msg(msg.channel_id.say("Must provide a valid URL"));
-
-        return Ok(());
-    }
-
-    let guild_id = match CACHE.read().guild_channel(msg.channel_id) {
-        Some(channel) => channel.read().guild_id,
-        None => {
-            check_msg(msg.channel_id.say("Error finding channel info"));
-
-            return Ok(());
-        },
-    };
-
-    let mut manager_lock = ctx.data.lock().get::<VoiceManager>().cloned().unwrap();
-    let mut manager = manager_lock.lock();
-
-    if let Some(handler) = manager.get_mut(guild_id) {
-        let source = match voice::ytdl(&url) {
-            Ok(source) => source,
-            Err(why) => {
-                println!("Err starting source: {:?}", why);
-
-                check_msg(msg.channel_id.say("Error sourcing ffmpeg"));
+        let guild_id = match CACHE.read().guild_channel(msg.channel_id) {
+            Some(channel) => channel.read().guild_id,
+            None => {
+                check_msg(msg.channel_id.say("Error finding channel info"));
 
                 return Ok(());
             },
         };
 
-        handler.play(source);
+        let mut manager_lock = ctx.data.lock().get::<VoiceManager>().cloned().unwrap();
+        let mut manager = manager_lock.lock();
 
-        check_msg(msg.channel_id.say("Playing song"));
+        if let Some(handler) = manager.get_mut(guild_id) {
+            let source = match voice::ytdl(&url) {
+                Ok(source) => source,
+                Err(why) => {
+                    println!("Err starting source: {:?}", why);
+
+                    check_msg(msg.channel_id.say("Error sourcing ffmpeg"));
+
+                    return Ok(());
+                },
+            };
+
+            handler.play(source);
+             let response = format!(
+                    "Playing: {}",
+                    url
+                );
+            check_msg(msg.channel_id.say(&response));
+        } else {
+            check_msg(msg.channel_id.say("Not in a voice channel to play in"));
+        }
+    } else if !args.is_empty() {
+        let query = str::replace(args, " ", "+");
+        debug!("Query: {}", query);
+        API::youtube_search(query, msg);
     } else {
-        check_msg(msg.channel_id.say("Not in a voice channel to play in"));
+        check_msg(msg.channel_id.say("Must provide a URL, Query or Selection [1-5]"));
     }
+
 });
 
 command!(undeafen(ctx, msg) {
@@ -286,6 +288,9 @@ command!(test(_ctx, msg, args) {
 //    let _ = msg.channel_id.say(query);
 });
 
+
+///------------------------------------Functions------------------------------------
+
 /// Checks that a message successfully sent; if not, then logs why to stdout.
 fn check_msg(result: SerenityResult<Message>) {
     if let Err(why) = result {
@@ -293,6 +298,17 @@ fn check_msg(result: SerenityResult<Message>) {
     }
 }
 
+///Checks if play-command parameter is URL or Number
+fn get_url(s: &str, user_id: &UserId) -> String {
+    let re = Regex::new(r"^[1-5]").unwrap();
+    if re.is_match(s)  {
+        return API::youtube_get_link(user_id, s.parse::<usize>().unwrap() - 1); //-1 because indexing starts at 0
+    } else {
+        return String::from(s);
+    }
+}
+
+// Remove ?
 fn string_to_static_str(s: String) -> &'static str {
     unsafe {
         let ret = mem::transmute(&s as &str);

@@ -12,12 +12,15 @@ use serenity::utils::Colour;
 use serenity::prelude::Mutex;
 use transient_hashmap::TransientHashMap;
 use serenity::model::id::UserId;
-
+use regex::Regex;
 
 
 
 lazy_static! {
     pub static ref YTS: Mutex<TransientHashMap<UserId, Vec<Value>>> = Mutex::new(TransientHashMap::new(30));
+    ///Compiling Regex only one time for better performance
+    /// Regex from https://stackoverflow.com/questions/2742813/how-to-validate-youtube-video-ids
+    static ref RE_LINKS: Regex = Regex::new(r"[^a-zA-Z0-9_-]").unwrap();
 }
 
 pub struct API {
@@ -42,7 +45,7 @@ impl API {
                     .build(&handle);
 
                 let uri = format!(
-                    "https://www.googleapis.com/youtube/v3/search?part=snippet&q={}&maxResults={}&key={}",
+                    "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q={}&maxResults={}&key={}",
                     query, limit, token
                 );
                 let uri = &uri[..];
@@ -109,6 +112,21 @@ impl API {
             }
         } else {
             let _ = msg.channel_id.say("Missing Youtube token!");
+        }
+    }
+
+    pub fn youtube_get_link(user_id: &UserId, index: usize) -> String {
+        let mut yts = YTS.lock();
+        yts.prune();
+        if yts.contains_key(user_id) {
+            let mut url = String::from("https://www.youtube.com/watch?v=").to_owned();
+            let vec = yts.get(&user_id).unwrap();
+            let video = &vec.get(index).unwrap();
+            url.push_str(&RE_LINKS.replace_all(&video["id"]["videoId"].to_string(), "").into_owned());
+            debug!("{}", url);
+            return url;
+        } else {
+            return String::from("Search results are already purged");
         }
     }
 }

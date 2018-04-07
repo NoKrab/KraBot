@@ -17,6 +17,7 @@ extern crate tokio_core;
 extern crate toml;
 extern crate transient_hashmap;
 extern crate typemap;
+extern crate regex;
 
 mod config;
 mod commands;
