@@ -13,10 +13,8 @@ command!(fibonacci(_ctx, msg, args) {
 });
 
 fn fib(n: u64) -> u64 {
-    if n == 1 {
-        return 1;
-    } else if n == 0{
-        return 0;
+    if n <= 1 {
+        return n;
     } else {
         fib(n - 1) + fib(n - 2)
     }

@@ -25,6 +25,7 @@ pub struct Required {
 #[derive(Debug, Deserialize)]
 pub struct Optional {
     pub database_name: Option<String>,
+    pub youtube_token: Option<String>,
     pub setting: Option<bool>,
 }
 
@@ -34,7 +35,7 @@ impl Config {
 
         // TODO catch open file errors
         if !Path::new(&CONFIG_PATH).exists() {
-            fs::copy("./config/config_example.toml", &CONFIG_PATH).expect("Error copying file");
+            fs::copy("./config/config.toml", &CONFIG_PATH).expect("Error copying file");
             println!("I created the config.toml for you, please be sure to insert your token accordingly!");
             ::std::process::exit(0);
         }
