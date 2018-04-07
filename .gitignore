@@ -77,3 +77,4 @@ log/
 \.idea/
 db/
 *.fmt
+Cargo.lock
