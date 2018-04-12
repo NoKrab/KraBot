@@ -31,11 +31,29 @@ impl Key for VoiceManager {
 }
 
 lazy_static! {
-//u32, &'static str
-//    static ref LINKS: Mutex<TransientHashMap<UserId, &'static str>> = Mutex::new(TransientHashMap::new(5));
-//    pub static ref YTS: Mutex<TransientHashMap<UserId, Vec<Value>>> = Mutex::new(TransientHashMap::new(30));
     static ref RE_PLAY: Regex = Regex::new(r"^http.+|^[1-5]").unwrap();
 }
+
+command!(stop(ctx, msg) {
+    let guild_id = match CACHE.read().guild_channel(msg.channel_id) {
+        Some(channel) => channel.read().guild_id,
+        None => {
+            check_msg(msg.channel_id.say("Groups and DMs not supported"));
+
+            return Ok(());
+        },
+    };
+    let mut manager_lock = ctx.data.lock().get::<VoiceManager>().cloned().unwrap();
+    let mut manager = manager_lock.lock();
+
+    if let Some(handler) = manager.get_mut(guild_id) {
+        handler.stop();
+
+        check_msg(msg.channel_id.say("Audioplayer stopped."));
+    } else {
+        check_msg(msg.channel_id.say("Not in a voice channel to stop player"));
+    }
+});
 
 command!(deafen(ctx, msg) {
     let guild_id = match CACHE.read().guild_channel(msg.channel_id) {
@@ -281,14 +299,6 @@ command!(search(_ctx, msg, args) {
     API::youtube_search(query, msg);
 });
 
-command!(test(_ctx, msg, args) {
-    let query = str::replace(args.full(), " ", "+");
-    debug!("{}", query);
-    API::youtube_search(query, msg);
-//    let _ = msg.channel_id.say(query);
-});
-
-
 ///------------------------------------Functions------------------------------------
 
 /// Checks that a message successfully sent; if not, then logs why to stdout.
@@ -302,18 +312,9 @@ fn check_msg(result: SerenityResult<Message>) {
 fn get_url(s: &str, user_id: &UserId) -> String {
     let re = Regex::new(r"^[1-5]").unwrap();
     if re.is_match(s)  {
-        return API::youtube_get_link(user_id, s.parse::<usize>().unwrap() - 1); //-1 because indexing starts at 0
+        return API::get_url(user_id, s.parse::<usize>().unwrap() - 1); //-1 because indexing starts at 0
     } else {
         return String::from(s);
     }
 }
 
-// Remove ?
-fn string_to_static_str(s: String) -> &'static str {
-    unsafe {
-        let ret = mem::transmute(&s as &str);
-        error!("AUWEIA {}", ret);
-        mem::forget(s);
-        ret
-    }
-}
