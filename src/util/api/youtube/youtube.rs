@@ -35,7 +35,7 @@ impl API {
         // Since Option is either None or Some, Some may just contain an empty String
         if let Some(ref token) = CONFIG.optional.youtube_token {
             let token = token.to_owned();
-            debug!("Youtbe API token: {}", token);
+            info!("Youtbe API token: {}", token);
             if !token.is_empty() {
                 let limit = 5;
                 let mut core = Core::new().unwrap();
@@ -49,13 +49,11 @@ impl API {
                     query, limit, token
                 );
                 let uri = &uri[..];
-                debug!("{}", uri);
+                info!("{}", uri);
 
                 let request = client
                     .request(Request::new(Method::Get, uri.parse().unwrap()))
                     .and_then(|res| {
-                        debug!("GET: {}", res.status());
-
                         res.body().concat2().and_then(move |body| {
                             let v: Value = serde_json::from_slice(&body).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
                             Ok(v)
@@ -68,7 +66,6 @@ impl API {
                     Some(array) => array.to_owned(),
                     None => Vec::new(),
                 };
-                debug!("{}", items.len());
 
                 //Build instruction message
                 let mut instruction: String = "Please select a track with the ".to_owned();
@@ -97,16 +94,11 @@ impl API {
                     for vid in &items {
                         e = e.field(count, &vid["snippet"]["title"], false);
                         count += 1;
-                        debug!("{}", &vid["snippet"]["title"]);
                     }
                     e
                     })
                 });
                 push(msg, items);
-                debug!(
-                    "################### {:?}",
-                    YTS.lock().get(&msg.author.id).unwrap()
-                );
             } else {
                 let _ = msg.channel_id.say("Missing Youtube token!");
             }
@@ -115,7 +107,7 @@ impl API {
         }
     }
 
-    pub fn youtube_get_link(user_id: &UserId, index: usize) -> String {
+    pub fn get_url(user_id: &UserId, index: usize) -> String {
         let mut yts = YTS.lock();
         yts.prune();
         if yts.contains_key(user_id) {
@@ -123,7 +115,7 @@ impl API {
             let vec = yts.get(&user_id).unwrap();
             let video = &vec.get(index).unwrap();
             url.push_str(&RE_LINKS.replace_all(&video["id"]["videoId"].to_string(), "").into_owned());
-            debug!("{}", url);
+            info!("{}", url);
             return url;
         } else {
             return String::from("Search results are already purged");
