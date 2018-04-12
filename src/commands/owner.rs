@@ -3,10 +3,14 @@ use std::sync::Mutex;
 use serenity::http;
 use std::mem;
 use serenity::model::id::UserId;
+use serde_json::*;
+use regex::Regex;
+
 
 lazy_static! {
     //u32, &'static str>
     static ref SAVES: Mutex<TransientHashMap<UserId, &'static str>> = Mutex::new(TransientHashMap::new(5));
+    static ref RE_CLEAR: Regex = Regex::new(r"^[1-5]").unwrap();
 }
 
 fn string_to_static_str(s: String) -> &'static str {
@@ -68,19 +72,35 @@ command!(host(_ctx, _msg, _args) {
 //    let _ = msg.reply("...");
 });
 
-command!(clear(_ctx, msg, _args) {
+/// refer to https://discordapp.com/developers/docs/resources/channel#get-channel-messages
+command!(clear(_ctx, msg, args) {
     let channel_id = msg.channel_id.0;
-    debug!("ChannelID: {:#?}", channel_id);
-//    let channel_num = channel_id as u64;
-    let _messages = match http::get_messages(channel_id, &"/search?content=clear") {
-        Ok(msgs) =>  {
-            info!("Messages: {:#?}", msgs);
-            msgs
-        },
+    let amount = match args.single::<String>() {
+        Ok(amount) => amount,
         Err(_) => {
-            error!("No messages found!");
+            let _ = msg.reply("Command requires parameter between 1 and 5");
             return Ok(());
         }
     };
+
+    if RE_CLEAR.is_match(&amount) {
+        let query = format!("?limit={}", amount);
+        let messages = match http::get_messages(channel_id, &query) { //&"/search?content=clear"
+            Ok(msgs) =>  {
+                debug!("Messages: {:#?}", msgs);
+                msgs
+            },
+            Err(_) => {
+                error!("No messages found!");
+                return Ok(());
+            }
+        };
+        for message in &messages {
+            message.delete();
+        }
+    } else {
+        let _ = msg.reply("Parameter has to be between 1 and 5");
+    }
+
 
 });
