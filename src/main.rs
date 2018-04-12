@@ -175,10 +175,15 @@ fn main() {
             .command("host", |c| c.cmd(commands::owner::host).owners_only(true))
             .command("save", |c| c.cmd(commands::owner::save).owners_only(true))
             .command("load", |c| c.cmd(commands::owner::load).owners_only(true))
+            .group("Fun", |g| {
+                    g.command("t", |c| {
+                        c.cmd(commands::fun::twitch)
+                    })
+            })
             .group("Voice", |g| {
-                g.command("join", |c| {
-                    c.cmd(commands::voice::join)
-                }).command("leave", |c| {
+                    g.command("join", |c| {
+                        c.cmd(commands::voice::join)
+                    }).command("leave", |c| {
                         c.cmd(commands::voice::leave)
                     })
                     .command("play", |c| {
@@ -199,8 +204,8 @@ fn main() {
                     .command("search", |c| {
                         c.cmd(commands::voice::search)
                     })
-                    .command("test", |c| {
-                        c.cmd(commands::voice::test)
+                    .command("stop", |c| {
+                        c.cmd(commands::voice::stop)
                     })
             })
             .command("commands", |c| {
@@ -249,7 +254,7 @@ fn setup_logger() -> Result<(), fern::InitError> {
                 message
             ))
         })
-        .level(log::LevelFilter::Debug)
+        .level(log::LevelFilter::Info)
         .chain(std::io::stdout());
 
     stdout_config.chain(file_config).apply()?;
