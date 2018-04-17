@@ -31,13 +31,13 @@
 
 use serde_json;
 //use serde_json::Error;
-use serde_json::Value;
-use std::str;
-use std::io;
 use futures::{Future, Stream};
+use hyper::header::{ContentLength, ContentType};
 use hyper::Client;
 use hyper::{Method, Request};
-use hyper::header::{ContentLength, ContentType};
+use serde_json::Value;
+use std::io;
+use std::str;
 use tokio_core::reactor::Core;
 
 pub fn run() {
@@ -85,9 +85,7 @@ pub fn run() {
         debug!("Response: {}", res.status());
 
         res.body().concat2().and_then(move |body| {
-            let v: Value = serde_json::from_slice(&body)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
-                .unwrap();
+            let v: Value = serde_json::from_slice(&body).map_err(|e| io::Error::new(io::ErrorKind::Other, e)).unwrap();
             debug!("{:?}", v);
             debug!("current IP address is {}", v["origin"]);
             Ok(())

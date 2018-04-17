@@ -1,9 +1,9 @@
-use toml;
-use std::path::Path;
+use serenity::client::validate_token;
 use std::fs;
 use std::fs::File;
 use std::io::{BufReader, Read};
-use serenity::client::validate_token;
+use std::path::Path;
+use toml;
 
 pub const CONFIG_PATH: &str = "./config/config.toml";
 
@@ -20,6 +20,7 @@ pub struct Required {
     pub mention: bool,
     pub shards: u64,
     pub sqlite_path: String,
+    pub postgresql_uri: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -35,22 +36,18 @@ impl Config {
 
         // TODO catch open file errors
         if !Path::new(&CONFIG_PATH).exists() {
-            fs::copy("./config/config.toml", &CONFIG_PATH).expect("Error copying file");
+            fs::copy("./config/config_example.toml", &CONFIG_PATH).expect("Error copying file");
             println!("I created the config.toml for you, please be sure to insert your token accordingly!");
             ::std::process::exit(0);
         }
         let f = File::open(path).expect("Unable to open config.toml file");
         let mut br = BufReader::new(f);
-        br.read_to_string(&mut config)
-            .expect("Unable to read string");
+        br.read_to_string(&mut config).expect("Unable to read string");
         // println!("{}", config);
         // let mut config: Config = toml::from_str(&config).unwrap();
         let mut config: Config = match toml::from_str(&config) {
             Ok(config) => config,
-            Err(why) => panic!(
-                "Something bad has happened! Check your config.toml. Error Message: {:?}",
-                why
-            ),
+            Err(why) => panic!("Something bad has happened! Check your config.toml. Error Message: {:?}", why),
         };
         match validate_token(&config.required.token) {
             Err(_) => panic!("Token is invalid"),
@@ -76,10 +73,7 @@ impl Config {
         let config = Config::read_config(path);
         let mut path = config.required.sqlite_path;
         let clone = path.clone();
-        let db_name = config
-            .optional
-            .database_name
-            .unwrap_or(String::from("rsbot.db"));
+        let db_name = config.optional.database_name.unwrap_or(String::from("rsbot.db"));
         let trailing_char = path.chars().nth(path.len() - 1).unwrap();
         match trailing_char {
             '/' => (),

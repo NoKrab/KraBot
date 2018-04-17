@@ -1,9 +1,9 @@
 use chrono::prelude::*;
 use chrono::{DateTime, Duration};
+use rusqlite::types::ToSql;
+use rusqlite::{Connection, Error};
 use std::fs;
 use std::path::Path;
-use rusqlite::{Connection, Error};
-use rusqlite::types::ToSql;
 
 //#[derive(Debug)]
 //struct Bot {
@@ -35,11 +35,7 @@ pub fn select_shard_uptime(con: &Connection, shard: i64) -> Result<Duration, Err
         stamp.push(row.get(0));
     }
     if !stamp.is_empty() {
-        let duration = Utc::now().signed_duration_since(
-            stamp[0]
-                .parse::<DateTime<Utc>>()
-                .expect("Failed parsing timestamp"),
-        );
+        let duration = Utc::now().signed_duration_since(stamp[0].parse::<DateTime<Utc>>().expect("Failed parsing timestamp"));
         Ok(duration)
     } else {
         error!("Could not retrieve timestamp");
