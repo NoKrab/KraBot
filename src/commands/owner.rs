@@ -2,6 +2,9 @@ use serenity::http;
 use serenity::model::id::UserId;
 use serde_json::*;
 use regex::Regex;
+use std::mem;
+use transient_hashmap::TransientHashMap;
+use std::sync::Mutex;
 
 
 lazy_static! {

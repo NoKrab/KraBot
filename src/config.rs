@@ -20,7 +20,7 @@ pub struct Required {
     pub mention: bool,
     pub shards: u64,
     pub sqlite_path: String,
-    pub postgresql_uri: String,
+    pub pg_connection_url: String,
 }
 
 #[derive(Debug, Deserialize)]
