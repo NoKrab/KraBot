@@ -1,6 +1,6 @@
 # RSBOT README
 
-How to build the project with voice support in Windows
+How to build the project with voice support on Windows
 ------
 Since libsodium requires GNU ABI instead of MSVC ABI, it is needed to use the GNU toolchain of rust. You can change to the GNU ABI using rustup, e.g. for the nightly Version execute **"rustup default nightly-gnu"** in your CLI.
 
