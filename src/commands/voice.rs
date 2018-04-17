@@ -1,4 +1,3 @@
-use serenity::model::id::UserId;
 use std::sync::Arc;
 use std::str;
 use typemap::Key;
@@ -9,11 +8,10 @@ use serenity::model::id::ChannelId;
 use serenity::model::id::UserId;
 use serenity::prelude::Mutex;
 use serenity::prelude::*;
-use serenity::utils::Colour;
 use serenity::voice;
 use serenity::Result as SerenityResult;
-use serenity::utils::Colour;
 use util::api::youtube::youtube::API;
+use regex::Regex;
 use CONFIG;
 
 pub struct VoiceManager;

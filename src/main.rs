@@ -26,6 +26,7 @@ extern crate uuid;
 mod commands;
 mod database;
 mod util;
+mod config;
 
 use database::postgres::postgres as pg_backend;
 

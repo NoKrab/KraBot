@@ -33,7 +33,6 @@ impl API {
                     "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q={}&maxResults={}&key={}",
                     query, limit, token
                 );
-               let result = core.run(request).unwrap();
 
                 let result = request::get(uri).unwrap();
 
