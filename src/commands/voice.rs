@@ -1,16 +1,6 @@
-use CONFIG;
-use serde_json;
-use std::mem;
 use serenity::model::id::UserId;
 use std::sync::Arc;
 use std::str;
-use std::io;
-use futures::{Future, Stream};
-use hyper::Client;
-use hyper_tls::HttpsConnector;
-use tokio_core::reactor::Core;
-use hyper::{Method, Request};
-use serde_json::Value;
 use typemap::Key;
 use serenity::client::bridge::voice::ClientVoiceManager;
 use serenity::client::CACHE;
@@ -20,7 +10,6 @@ use serenity::voice;
 use serenity::prelude::*;
 use serenity::prelude::Mutex;
 use serenity::Result as SerenityResult;
-use serenity::utils::Colour;
 use util::api::youtube::youtube::API;
 use regex::Regex;
 

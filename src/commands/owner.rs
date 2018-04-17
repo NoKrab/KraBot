@@ -3,7 +3,6 @@ use std::sync::Mutex;
 use serenity::http;
 use std::mem;
 use serenity::model::id::UserId;
-use serde_json::*;
 use regex::Regex;
 
 
@@ -96,7 +95,7 @@ command!(clear(_ctx, msg, args) {
             }
         };
         for message in &messages {
-            message.delete();
+            let _ = message.delete();
         }
     } else {
         let _ = msg.reply("Parameter has to be between 1 and 5");

@@ -46,6 +46,7 @@ use serenity::model::gateway::Ready;
 use serenity::client::bridge::gateway::ShardManager;
 use serenity::http;
 use typemap::Key;
+use util::network::request::request;
 
 // What actual use does this bring?
 lazy_static! {
@@ -101,6 +102,7 @@ fn main() {
         Ok(_) => (),
         Err(why) => eprintln!("Failed to init logger: {}", why), // Since the logger isn't setup yet, we use eprintln!
     }
+    request::post();
     debug!("Configuration file: {:?}", *CONFIG);
     debug!("SQLITE PATH: {:?}", *SQLITE_PATH);
 
