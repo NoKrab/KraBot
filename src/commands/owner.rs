@@ -1,7 +1,4 @@
-use transient_hashmap::TransientHashMap;
-use std::sync::Mutex;
 use serenity::http;
-use std::mem;
 use serenity::model::id::UserId;
 use serde_json::*;
 use regex::Regex;

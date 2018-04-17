@@ -1,20 +1,18 @@
-use CONFIG;
-use serde_json;
-use std::io;
 use futures::{Future, Stream};
 use hyper::Client;
-use hyper_tls::HttpsConnector;
-use tokio_core::reactor::Core;
 use hyper::{Method, Request};
+use hyper_tls::HttpsConnector;
+use regex::Regex;
+use serde_json;
 use serde_json::Value;
 use serenity::model::channel::Message;
-use serenity::utils::Colour;
-use serenity::prelude::Mutex;
-use transient_hashmap::TransientHashMap;
 use serenity::model::id::UserId;
-use regex::Regex;
-
-
+use serenity::prelude::Mutex;
+use serenity::utils::Colour;
+use std::io;
+use tokio_core::reactor::Core;
+use transient_hashmap::TransientHashMap;
+use CONFIG;
 
 lazy_static! {
     pub static ref YTS: Mutex<TransientHashMap<UserId, Vec<Value>>> = Mutex::new(TransientHashMap::new(30));
@@ -23,9 +21,7 @@ lazy_static! {
     static ref RE_LINKS: Regex = Regex::new(r"[^a-zA-Z0-9_-]").unwrap();
 }
 
-pub struct API {
-
-}
+pub struct API {}
 
 impl API {
     pub fn youtube_search(query: String, msg: &Message) {
@@ -40,14 +36,9 @@ impl API {
                 let limit = 5;
                 let mut core = Core::new().unwrap();
                 let handle = core.handle();
-                let client = Client::configure()
-                    .connector(HttpsConnector::new(4, &handle).unwrap())
-                    .build(&handle);
+                let client = Client::configure().connector(HttpsConnector::new(4, &handle).unwrap()).build(&handle);
 
-                let uri = format!(
-                    "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q={}&maxResults={}&key={}",
-                    query, limit, token
-                );
+                let uri = format!("https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q={}&maxResults={}&key={}", query, limit, token);
                 let uri = &uri[..];
                 info!("{}", uri);
 

@@ -4,6 +4,7 @@ prefix = "!"
 mention = true #should the bot react on mention?
 shards = 1
 sqlite_path = "./db/"
+pg_connection_url = "postgres://username:password@hostname/database"
 
 [optional]
 #database_name = "" # defaults to rsbot.db if nothing is entered
