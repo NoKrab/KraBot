@@ -13,38 +13,44 @@ extern crate serde_derive;
 extern crate serde_json;
 #[macro_use]
 extern crate serenity;
+extern crate postgres;
+extern crate r2d2;
+extern crate r2d2_postgres;
+extern crate regex;
 extern crate tokio_core;
 extern crate toml;
 extern crate transient_hashmap;
 extern crate typemap;
-extern crate regex;
+extern crate uuid;
 
-mod config;
 mod commands;
 mod database;
 mod util;
 
+use database::postgres::postgres as pg_backend;
+
+use commands::voice::VoiceManager;
 use config::Config;
 use database::sqlite::sqlite;
-use commands::voice::VoiceManager;
 //use util::network;
 
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fs;
 use std::sync::Arc;
-use std::collections::HashSet;
-use std::collections::HashMap;
 // use std::fs::File;
 // use std::io::Write;
-use std::path::Path;
 use chrono::prelude::*;
-use serenity::prelude::*;
-use serenity::prelude::Mutex;
-use serenity::framework::StandardFramework;
+use serenity::client::bridge::gateway::ShardManager;
+use serenity::client::CACHE;
 use serenity::framework::standard::DispatchError;
+use serenity::framework::StandardFramework;
+use serenity::http;
 use serenity::model::event::ResumedEvent;
 use serenity::model::gateway::Ready;
-use serenity::client::bridge::gateway::ShardManager;
-use serenity::http;
+use serenity::prelude::Mutex;
+use serenity::prelude::*;
+use std::path::Path;
 use typemap::Key;
 use util::network::request::request;
 
@@ -62,7 +68,7 @@ struct ShardManagerContainer;
 
 impl EventHandler for Handler {
     fn ready(&self, ctx: Context, ready: Ready) {
-        ctx.set_game_name("I do not work :)");
+        ctx.set_game_name("Some text");
         if let Some(shard) = ready.shard {
             // Note that array index 0 is 0-indexed, while index 1 is 1-indexed.
             //
@@ -83,6 +89,10 @@ impl EventHandler for Handler {
             // file.write_fmt(format_args!("{:?}", Utc::now()))
             //     .expect("Error writing to file!");
         }
+        // Since the bot started, the CACHE should be filled with information kappa
+        let guilds = CACHE.read().guilds.len();
+        debug!("Guilds in the Cache: {}", guilds);
+        pg_backend::init_db();
     }
     fn resume(&self, _: Context, _: ResumedEvent) {
         info!("Resumed");
@@ -105,6 +115,8 @@ fn main() {
     request::post();
     debug!("Configuration file: {:?}", *CONFIG);
     debug!("SQLITE PATH: {:?}", *SQLITE_PATH);
+    //    debug!("Configuration file: {:?}", *CONFIG);
+    //    debug!("SQLITE PATH: {:?}", *SQLITE_PATH);
 
     let mut client = Client::new(&*CONFIG.required.token, Handler).expect("Error creating client");
 
@@ -132,46 +144,31 @@ fn main() {
 
     client.with_framework(
         StandardFramework::new()
-            .configure(|c| {
-                c.owners(owners)
-                    .prefix(&*CONFIG.required.prefix)
-                    .on_mention(CONFIG.required.mention)
-                    .delimiters(vec![", ", ","])
-            })
-            .before(|ctx, _m, cmd_name| {
-                debug!("{:?}", _m);
-                debug!("Running command {}", cmd_name);
+            .configure(|c| c.owners(owners).prefix(&*CONFIG.required.prefix).on_mention(CONFIG.required.mention).delimiters(vec![", ", ","]))
+            .before(|ctx, msg, cmd_name| {
+                debug!("Got command '{}' by user '{}'", cmd_name, msg.author.name);
                 let mut data = ctx.data.lock();
                 let counter = data.get_mut::<CommandCounter>().unwrap();
                 let entry = counter.entry(cmd_name.to_string()).or_insert(0);
                 *entry += 1;
                 true
             })
-            .after(|_, _m, cmd_name, error| match error {
-                Ok(()) => {
-                    let mut duration = Utc::now().signed_duration_since(_m.timestamp);
-                    debug!("Command '{}' completed in {:#?}", cmd_name, duration);
-                }
+            .after(|_, msg, cmd_name, error| match error {
+                Ok(()) => debug!("Command '{}' completed in {:?}", cmd_name, Utc::now().signed_duration_since(msg.timestamp)),
                 Err(why) => error!("Command '{}' returned error {:?}", cmd_name, why),
+            })
+            .unrecognised_command(|_, _, unknown_command_name| {
+                debug!("Could not find command named '{}'", unknown_command_name);
             })
             .on_dispatch_error(|_ctx, msg, error| {
                 if let DispatchError::RateLimited(seconds) = error {
-                    let _ = msg.channel_id
-                        .say(&format!("Try this again in {} seconds", seconds));
+                    let _ = msg.channel_id.say(&format!("Try this again in {} seconds", seconds));
                 }
             })
-            .command("ping", |c| {
-                c.cmd(commands::meta::ping)
-            })
-            .command("multiply", |c| {
-                c.cmd(commands::math::multiply)
-            })
-            .command("fib", |c| {
-                c.cmd(commands::math::fibonacci)
-            })
-            .command("uptime", |c| {
-                c.cmd(commands::meta::uptime)
-            })
+            .command("ping", |c| c.cmd(commands::meta::ping))
+            .command("multiply", |c| c.cmd(commands::math::multiply))
+            .command("fib", |c| c.cmd(commands::math::fibonacci))
+            .command("uptime", |c| c.cmd(commands::meta::uptime))
             .command("quit", |c| c.cmd(commands::owner::quit).owners_only(true))
             .command("clear", |c| c.cmd(commands::owner::clear).owners_only(true))
             .command("host", |c| c.cmd(commands::owner::host).owners_only(true))
@@ -210,9 +207,7 @@ fn main() {
                         c.cmd(commands::voice::stop)
                     })
             })
-            .command("commands", |c| {
-                c.cmd(commands::meta::commands)
-            }),
+            .command("commands", |c| c.cmd(commands::meta::commands)),
     );
 
     /*    thread::spawn(move || loop {
@@ -229,10 +224,7 @@ fn main() {
         }
     });*/
 
-    if let Err(why) = client
-        .start_shards(CONFIG.required.shards)
-        .map_err(|why| error!("Client ended: {:?}", why))
-    {
+    if let Err(why) = client.start_shards(CONFIG.required.shards).map_err(|why| error!("Client ended: {:?}", why)) {
         error!("Client error: {:?}", why);
     }
 }
@@ -242,9 +234,7 @@ fn setup_logger() -> Result<(), fern::InitError> {
         fs::create_dir("./log").expect("Error creating folder")
     };
 
-    let file_config = fern::Dispatch::new()
-        .level(log::LevelFilter::Error)
-        .chain(fern::log_file("./log/rust.log")?);
+    let file_config = fern::Dispatch::new().level(log::LevelFilter::Error).chain(fern::log_file("./log/rust.log")?);
 
     let stdout_config = fern::Dispatch::new()
         .format(|out, message, record| {

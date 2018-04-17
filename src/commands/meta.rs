@@ -1,7 +1,7 @@
-use SQLITE_PATH;
 use database::sqlite::sqlite;
-use CommandCounter;
 use std::fmt::Write;
+use CommandCounter;
+use SQLITE_PATH;
 
 command!(ping(_ctx, msg) {
     let _ = msg.channel_id.say("Pong!");

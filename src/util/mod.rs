@@ -1,2 +1,2 @@
-pub mod network;
 pub mod api;
+pub mod network;

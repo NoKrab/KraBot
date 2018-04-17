@@ -1,9 +1,9 @@
-use transient_hashmap::TransientHashMap;
-use std::sync::Mutex;
 use serenity::http;
-use std::mem;
 use serenity::model::id::UserId;
 use regex::Regex;
+use std::mem;
+use transient_hashmap::TransientHashMap;
+use std::sync::Mutex;
 
 
 lazy_static! {
