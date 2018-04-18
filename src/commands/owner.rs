@@ -1,6 +1,5 @@
 use serenity::http;
 use serenity::model::id::UserId;
-use serde_json::*;
 use regex::Regex;
 use std::mem;
 use transient_hashmap::TransientHashMap;
@@ -96,7 +95,7 @@ command!(clear(_ctx, msg, args) {
             }
         };
         for message in &messages {
-            message.delete();
+            let _ = message.delete();
         }
     } else {
         let _ = msg.reply("Parameter has to be between 1 and 5");

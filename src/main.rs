@@ -24,9 +24,9 @@ extern crate typemap;
 extern crate uuid;
 
 mod commands;
-mod config;
 mod database;
 mod util;
+mod config;
 
 use database::postgres::postgres as pg_backend;
 
@@ -53,6 +53,7 @@ use serenity::prelude::Mutex;
 use serenity::prelude::*;
 use std::path::Path;
 use typemap::Key;
+use util::network::request::request;
 
 // What actual use does this bring?
 lazy_static! {
@@ -73,10 +74,10 @@ impl EventHandler for Handler {
             // Note that array index 0 is 0-indexed, while index 1 is 1-indexed.
             //
             // This may seem unintuitive, but it models Discord's behaviour.
-            //            debug!(
-            //                "{} is connected on shard {}/{}!",
-            //                ready.user.name, shard[0], shard[1],
-            //            );
+            info!(
+                "{} is connected on shard {}/{}!",
+                ready.user.name, shard[0], shard[1],
+            );
             let con = sqlite::create_connection(&*SQLITE_PATH);
             sqlite::create_bot_table(&con);
             sqlite::insert_timestamp(&con, shard[0] as i64, ready.user.name);
@@ -112,6 +113,9 @@ fn main() {
         Ok(_) => (),
         Err(why) => eprintln!("Failed to init logger: {}", why), // Since the logger isn't setup yet, we use eprintln!
     }
+    request::post();
+    debug!("Configuration file: {:?}", *CONFIG);
+    debug!("SQLITE PATH: {:?}", *SQLITE_PATH);
     //    debug!("Configuration file: {:?}", *CONFIG);
     //    debug!("SQLITE PATH: {:?}", *SQLITE_PATH);
 

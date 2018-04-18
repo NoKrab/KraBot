@@ -1,18 +1,13 @@
-use futures::{Future, Stream};
-use hyper::Client;
-use hyper::{Method, Request};
-use hyper_tls::HttpsConnector;
-use regex::Regex;
-use serde_json;
+use CONFIG;
 use serde_json::Value;
 use serenity::model::channel::Message;
-use serenity::model::id::UserId;
 use serenity::prelude::Mutex;
-use serenity::utils::Colour;
-use std::io;
-use tokio_core::reactor::Core;
 use transient_hashmap::TransientHashMap;
-use CONFIG;
+use serenity::model::id::UserId;
+use regex::Regex;
+use util::network::request::request;
+
+
 
 lazy_static! {
     pub static ref YTS: Mutex<TransientHashMap<UserId, Vec<Value>>> = Mutex::new(TransientHashMap::new(30));
@@ -34,24 +29,12 @@ impl API {
             info!("Youtbe API token: {}", token);
             if !token.is_empty() {
                 let limit = 5;
-                let mut core = Core::new().unwrap();
-                let handle = core.handle();
-                let client = Client::configure().connector(HttpsConnector::new(4, &handle).unwrap()).build(&handle);
+                let uri = format!(
+                    "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q={}&maxResults={}&key={}",
+                    query, limit, token
+                );
 
-                let uri = format!("https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q={}&maxResults={}&key={}", query, limit, token);
-                let uri = &uri[..];
-                info!("{}", uri);
-
-                let request = client
-                    .request(Request::new(Method::Get, uri.parse().unwrap()))
-                    .and_then(|res| {
-                        res.body().concat2().and_then(move |body| {
-                            let v: Value = serde_json::from_slice(&body).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-                            Ok(v)
-                        })
-                    });
-
-                let result = core.run(request).unwrap();
+                let result = request::get(uri).unwrap();
 
                 let items = match result["items"].as_array() {
                     Some(array) => array.to_owned(),
