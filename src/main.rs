@@ -175,38 +175,17 @@ fn main() {
             .command("host", |c| c.cmd(commands::owner::host).owners_only(true))
             .command("save", |c| c.cmd(commands::owner::save).owners_only(true))
             .command("load", |c| c.cmd(commands::owner::load).owners_only(true))
-            .group("Fun", |g| {
-                    g.command("t", |c| {
-                        c.cmd(commands::fun::twitch)
-                    })
-            })
+            .group("Fun", |g| g.command("t", |c| c.cmd(commands::fun::twitch)))
             .group("Voice", |g| {
-                    g.command("join", |c| {
-                        c.cmd(commands::voice::join)
-                    }).command("leave", |c| {
-                        c.cmd(commands::voice::leave)
-                    })
-                    .command("play", |c| {
-                        c.cmd(commands::voice::play)
-                    })
-                    .command("mute", |c| {
-                        c.cmd(commands::voice::mute)
-                    })
-                    .command("unmute", |c| {
-                        c.cmd(commands::voice::unmute)
-                    })
-                    .command("deafen", |c| {
-                        c.cmd(commands::voice::deafen)
-                    })
-                    .command("undeafen", |c| {
-                        c.cmd(commands::voice::undeafen)
-                    })
-                    .command("search", |c| {
-                        c.cmd(commands::voice::search)
-                    })
-                    .command("stop", |c| {
-                        c.cmd(commands::voice::stop)
-                    })
+                g.command("join", |c| c.cmd(commands::voice::join))
+                    .command("leave", |c| c.cmd(commands::voice::leave))
+                    .command("play", |c| c.cmd(commands::voice::play))
+                    .command("mute", |c| c.cmd(commands::voice::mute))
+                    .command("unmute", |c| c.cmd(commands::voice::unmute))
+                    .command("deafen", |c| c.cmd(commands::voice::deafen))
+                    .command("undeafen", |c| c.cmd(commands::voice::undeafen))
+                    .command("search", |c| c.cmd(commands::voice::search))
+                    .command("stop", |c| c.cmd(commands::voice::stop))
             })
             .command("commands", |c| c.cmd(commands::meta::commands)),
     );
