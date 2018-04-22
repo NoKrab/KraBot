@@ -5,7 +5,8 @@ use serenity::prelude::Mutex;
 use transient_hashmap::TransientHashMap;
 use serenity::model::id::UserId;
 use regex::Regex;
-use util::network::request::request;
+use hyper::{Method};
+use util::network::request::request::SimpleRequest;
 
 
 
@@ -34,7 +35,7 @@ impl API {
                     query, limit, token
                 );
 
-                let result = request::get(uri).unwrap();
+                let result = SimpleRequest::new().uri(uri).method(Method::Get).run().unwrap();
 
                 let items = match result["items"].as_array() {
                     Some(array) => array.to_owned(),
