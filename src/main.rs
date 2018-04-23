@@ -143,8 +143,8 @@ fn main() {
     };
 
 
-        let mut framework: StandardFramework = {
-            let f: StandardFramework = StandardFramework::new()
+        let framework: StandardFramework = {
+            let mut f: StandardFramework = StandardFramework::new()
                 .configure(|c| c.owners(owners).prefix(&*CONFIG.required.prefix).on_mention(CONFIG.required.mention).delimiters(vec![", ", ","]))
                 .before(|ctx, msg, cmd_name| {
                     debug!("Got command '{}' by user '{}'", cmd_name, msg.author.name);
@@ -177,19 +177,26 @@ fn main() {
                 .command("load", |c| c.cmd(commands::owner::load).owners_only(true))
                 .group("Fun", |g| g.command("t", |c| c.cmd(commands::fun::twitch)))
                 .group("Voice", |g| {
-                    g.command("join", |c| c.cmd(commands::voice::join))
+                    let mut g = g.command("join", |c| c.cmd(commands::voice::join))
                         .command("leave", |c| c.cmd(commands::voice::leave))
                         .command("play", |c| c.cmd(commands::voice::play))
                         .command("mute", |c| c.cmd(commands::voice::mute))
                         .command("unmute", |c| c.cmd(commands::voice::unmute))
                         .command("deafen", |c| c.cmd(commands::voice::deafen))
                         .command("undeafen", |c| c.cmd(commands::voice::undeafen))
-                        .command("search", |c| c.cmd(commands::voice::search))
-                        .command("stop", |c| c.cmd(commands::voice::stop))
+                        .command("stop", |c| c.cmd(commands::voice::stop));
+                    if let Some(ref youtube_token) = CONFIG.optional.youtube_token {
+                        info!("Youtube API enabled.");
+                        g = g.command("search", |c| c.cmd(commands::voice::search));
+                    }
+                    g
                 });
-            f.command("commands", |c| c.cmd(commands::meta::commands))
+
+
+            f = f.command("commands", |c| c.cmd(commands::meta::commands));
+            f
         };
-//        framework.command("commands", |c| c.cmd(commands::meta::commands));
+
     client.with_framework(
         framework
     );
