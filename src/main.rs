@@ -113,7 +113,6 @@ fn main() {
         Ok(_) => (),
         Err(why) => eprintln!("Failed to init logger: {}", why), // Since the logger isn't setup yet, we use eprintln!
     }
-    request::post();
     debug!("Configuration file: {:?}", *CONFIG);
     debug!("SQLITE PATH: {:?}", *SQLITE_PATH);
     //    debug!("Configuration file: {:?}", *CONFIG);
@@ -143,51 +142,56 @@ fn main() {
         }
     };
 
+
+        let mut framework: StandardFramework = {
+            let f: StandardFramework = StandardFramework::new()
+                .configure(|c| c.owners(owners).prefix(&*CONFIG.required.prefix).on_mention(CONFIG.required.mention).delimiters(vec![", ", ","]))
+                .before(|ctx, msg, cmd_name| {
+                    debug!("Got command '{}' by user '{}'", cmd_name, msg.author.name);
+                    let mut data = ctx.data.lock();
+                    let counter = data.get_mut::<CommandCounter>().unwrap();
+                    let entry = counter.entry(cmd_name.to_string()).or_insert(0);
+                    *entry += 1;
+                    true
+                })
+                .after(|_, msg, cmd_name, error| match error {
+                    Ok(()) => debug!("Command '{}' completed in {:?}", cmd_name, Utc::now().signed_duration_since(msg.timestamp)),
+                    Err(why) => error!("Command '{}' returned error {:?}", cmd_name, why),
+                })
+                .unrecognised_command(|_, _, unknown_command_name| {
+                    debug!("Could not find command named '{}'", unknown_command_name);
+                })
+                .on_dispatch_error(|_ctx, msg, error| {
+                    if let DispatchError::RateLimited(seconds) = error {
+                        let _ = msg.channel_id.say(&format!("Try this again in {} seconds", seconds));
+                    }
+                })
+                .command("ping", |c| c.cmd(commands::meta::ping))
+                .command("multiply", |c| c.cmd(commands::math::multiply))
+                .command("fib", |c| c.cmd(commands::math::fibonacci))
+                .command("uptime", |c| c.cmd(commands::meta::uptime))
+                .command("quit", |c| c.cmd(commands::owner::quit).owners_only(true))
+                .command("clear", |c| c.cmd(commands::owner::clear).owners_only(true))
+                .command("host", |c| c.cmd(commands::owner::host).owners_only(true))
+                .command("save", |c| c.cmd(commands::owner::save).owners_only(true))
+                .command("load", |c| c.cmd(commands::owner::load).owners_only(true))
+                .group("Fun", |g| g.command("t", |c| c.cmd(commands::fun::twitch)))
+                .group("Voice", |g| {
+                    g.command("join", |c| c.cmd(commands::voice::join))
+                        .command("leave", |c| c.cmd(commands::voice::leave))
+                        .command("play", |c| c.cmd(commands::voice::play))
+                        .command("mute", |c| c.cmd(commands::voice::mute))
+                        .command("unmute", |c| c.cmd(commands::voice::unmute))
+                        .command("deafen", |c| c.cmd(commands::voice::deafen))
+                        .command("undeafen", |c| c.cmd(commands::voice::undeafen))
+                        .command("search", |c| c.cmd(commands::voice::search))
+                        .command("stop", |c| c.cmd(commands::voice::stop))
+                });
+            f.command("commands", |c| c.cmd(commands::meta::commands))
+        };
+//        framework.command("commands", |c| c.cmd(commands::meta::commands));
     client.with_framework(
-        StandardFramework::new()
-            .configure(|c| c.owners(owners).prefix(&*CONFIG.required.prefix).on_mention(CONFIG.required.mention).delimiters(vec![", ", ","]))
-            .before(|ctx, msg, cmd_name| {
-                debug!("Got command '{}' by user '{}'", cmd_name, msg.author.name);
-                let mut data = ctx.data.lock();
-                let counter = data.get_mut::<CommandCounter>().unwrap();
-                let entry = counter.entry(cmd_name.to_string()).or_insert(0);
-                *entry += 1;
-                true
-            })
-            .after(|_, msg, cmd_name, error| match error {
-                Ok(()) => debug!("Command '{}' completed in {:?}", cmd_name, Utc::now().signed_duration_since(msg.timestamp)),
-                Err(why) => error!("Command '{}' returned error {:?}", cmd_name, why),
-            })
-            .unrecognised_command(|_, _, unknown_command_name| {
-                debug!("Could not find command named '{}'", unknown_command_name);
-            })
-            .on_dispatch_error(|_ctx, msg, error| {
-                if let DispatchError::RateLimited(seconds) = error {
-                    let _ = msg.channel_id.say(&format!("Try this again in {} seconds", seconds));
-                }
-            })
-            .command("ping", |c| c.cmd(commands::meta::ping))
-            .command("multiply", |c| c.cmd(commands::math::multiply))
-            .command("fib", |c| c.cmd(commands::math::fibonacci))
-            .command("uptime", |c| c.cmd(commands::meta::uptime))
-            .command("quit", |c| c.cmd(commands::owner::quit).owners_only(true))
-            .command("clear", |c| c.cmd(commands::owner::clear).owners_only(true))
-            .command("host", |c| c.cmd(commands::owner::host).owners_only(true))
-            .command("save", |c| c.cmd(commands::owner::save).owners_only(true))
-            .command("load", |c| c.cmd(commands::owner::load).owners_only(true))
-            .group("Fun", |g| g.command("t", |c| c.cmd(commands::fun::twitch)))
-            .group("Voice", |g| {
-                g.command("join", |c| c.cmd(commands::voice::join))
-                    .command("leave", |c| c.cmd(commands::voice::leave))
-                    .command("play", |c| c.cmd(commands::voice::play))
-                    .command("mute", |c| c.cmd(commands::voice::mute))
-                    .command("unmute", |c| c.cmd(commands::voice::unmute))
-                    .command("deafen", |c| c.cmd(commands::voice::deafen))
-                    .command("undeafen", |c| c.cmd(commands::voice::undeafen))
-                    .command("search", |c| c.cmd(commands::voice::search))
-                    .command("stop", |c| c.cmd(commands::voice::stop))
-            })
-            .command("commands", |c| c.cmd(commands::meta::commands)),
+        framework
     );
 
     /*    thread::spawn(move || loop {
