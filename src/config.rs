@@ -29,7 +29,8 @@ pub struct Optional {
     pub youtube_token: Option<String>,
     pub setting: Option<bool>,
     pub imgur_client_id: Option<String>,
-    pub imgur_refresh_token: Option<String>
+    pub imgur_client_secret: Option<String>,
+    pub imgur_refresh_token: Option<String>,
 }
 
 impl Config {
