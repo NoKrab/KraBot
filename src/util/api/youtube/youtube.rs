@@ -43,12 +43,13 @@ impl API {
                 };
 
                 //Build instruction message
-                let mut instruction: String = "Please select a track with the ".to_owned();
+                let mut instruction: String = "Please select a track with the ".to_string();
                 instruction.push_str(&CONFIG.required.prefix);
                 instruction.push_str("play command:");
 
-                let _ = msg.channel_id.send_message(|m| {
-                    m.content(&instruction).embed(|e| {
+                let _ = msg.channel_id.send_message(|mut m| {
+                    m.content(&instruction);
+                    m.embed(|mut e| {
 //                        e.author(|a| {
 //                            a.name("KinG")
 //                                .icon_url("http://i0.kym-cdn.com/photos/images/newsfeed/001/339/830/135.png")
@@ -61,17 +62,18 @@ impl API {
 //                                f.icon_url("http://i0.kym-cdn.com/photos/images/newsfeed/001/331/733/acc.png")
 //                                    .text("I BIMS DA FOOTER TECKST ECKS DEE")
 //                            })
-                    let mut e = e;
+//                    let mut e = e;
 
                     let mut count = 1;
 
                     //Add sone field for one video result
                     for vid in &items {
-                        e = e.field(count, &vid["snippet"]["title"], false);
+                        e.field(count, &vid["snippet"]["title"], false);
                         count += 1;
                     }
                     e
-                    })
+                    });
+                    m
                 });
                 push(msg, items);
             } else {
