@@ -191,6 +191,13 @@ fn main() {
                     }
                     g
                 });
+                if let Some(ref imgur_client_id) = CONFIG.optional.imgur_client_id {
+                    info!("Imgur API enabled.");
+                    f = f.group("Imgur", |g| {
+                        let mut g = g.command("imgs", |c| c.cmd(commands::imgur::get_imgs));
+                        g
+                    });
+                }
 
 
             f = f.command("commands", |c| c.cmd(commands::meta::commands));

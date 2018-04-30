@@ -1,8 +1,10 @@
 use CONFIG;
 use util::network::request::request::SimpleRequest;
 use std::sync::Mutex;
-use hyper::header::{ContentType, Headers};
+use hyper::header::{ContentType, Headers, Authorization, Bearer};
 use hyper::{Method};
+use serde_json::Value;
+
 
 lazy_static! {
     static ref ACCESS_TOKEN: Mutex<String> = Mutex::new("".to_string());
@@ -52,11 +54,35 @@ impl Account {
             let mut refresh_token = REFRESH_TOKEN.lock().unwrap();
 
             access_token.clear();
-            access_token.insert_str(0, &result["access_token"].to_string());
+            access_token.insert_str(0, &result["access_token"].as_str().unwrap());
             refresh_token.clear();
-            refresh_token.insert_str(0, &result["refresh_token"].to_string());
+            refresh_token.insert_str(0, &result["refresh_token"].as_str().unwrap());
 
-            debug!("generate_access_token -> {}", result);
+            debug!("generate_access_token -> {}", access_token);
+            debug!("generate_refresh_token -> {}", refresh_token);
+        }
+    }
+
+    pub fn account_images() -> Option<Value> {
+        Account::generate_access_token();
+        let mut headers = Headers::new();
+        headers.set(
+            Authorization(
+                Bearer {
+                    token: ACCESS_TOKEN.lock().unwrap().to_owned()
+                }
+            )
+        );
+        if let Some(result) = SimpleRequest::new().headers(headers).uri("https://api.imgur.com/3/account/me/images".to_string()).method(Method::Get).run() {
+            info!("{}", result.to_string());
+            if result["success"] == true {
+                return Some(result["data"].to_owned());
+            } else {
+                return None;
+            }
+        } else {
+            info!("RIP");
+            return None;
         }
     }
 }
