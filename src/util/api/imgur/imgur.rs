@@ -58,13 +58,12 @@ impl Account {
             refresh_token.clear();
             refresh_token.insert_str(0, &result["refresh_token"].as_str().unwrap());
 
-            debug!("generate_access_token -> {}", access_token);
-            debug!("generate_refresh_token -> {}", refresh_token);
+            info!("generate_access_token -> {}", access_token);
+            info!("generate_refresh_token -> {}", refresh_token);
         }
     }
 
     pub fn account_images() -> Option<Value> {
-        Account::generate_access_token();
         let mut headers = Headers::new();
         headers.set(
             Authorization(
@@ -73,8 +72,8 @@ impl Account {
                 }
             )
         );
-        if let Some(result) = SimpleRequest::new().headers(headers).uri("https://api.imgur.com/3/account/me/images".to_string()).method(Method::Get).run() {
-            info!("{}", result.to_string());
+        let request = SimpleRequest::new().headers(headers).uri("https://api.imgur.com/3/account/me/images".to_string()).method(Method::Get);
+        if let Some(result) = make_imgur_request(request) {
             if result["success"] == true {
                 return Some(result["data"].to_owned());
             } else {
@@ -84,5 +83,28 @@ impl Account {
             info!("RIP");
             return None;
         }
+    }
+}
+
+fn make_imgur_request(request: SimpleRequest) -> Option<Value> {
+    if let Some(result) = request.clone().run() {
+        if result["status"] == 403 {
+            info!("Requesting new token...");
+            Account::generate_access_token();
+            return request.clone().headers({
+                let mut headers = request.get_headers().unwrap();
+                headers.set(
+                    Authorization(
+                        Bearer {
+                            token: ACCESS_TOKEN.lock().unwrap().to_owned()
+                        }
+                    )
+                );
+                headers
+            }).run();
+        }
+        return Some(result);
+    } else {
+       return None;
     }
 }
