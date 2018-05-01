@@ -72,13 +72,14 @@ fn post(uri: String, headers: Headers) {
     info!("{}", core.run(request).unwrap());
 }
 
-#[derive()]
+#[derive(Debug, Clone)]
 pub struct SimpleRequest {
     uri: String,
     method: Method,
     headers: Option<Headers>,
     body: Option<String>,
 }
+
 
 impl SimpleRequest {
     pub fn new() -> SimpleRequest {
@@ -98,6 +99,14 @@ impl SimpleRequest {
     pub fn headers(mut self, headers: Headers) -> Self {
         self.headers = Some(headers);
         self
+    }
+
+    pub fn get_headers(mut self) -> Option<Headers> {
+        if let Some(headers) = self.headers {
+            return Some(headers);
+        } else {
+            return None;
+        }
     }
 
     pub fn body(mut self, body: String) -> Self {
