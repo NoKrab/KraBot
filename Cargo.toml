@@ -29,7 +29,6 @@ r2d2_postgres = "0.14"
 
 [dependencies.lazy_static]
 version = "1.0"
-features = ["nightly"]
 
 [dependencies.serenity]
 git = "https://github.com/zeyla/serenity.git"
