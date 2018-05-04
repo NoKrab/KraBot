@@ -22,6 +22,7 @@ extern crate toml;
 extern crate transient_hashmap;
 extern crate typemap;
 extern crate uuid;
+extern crate eval;
 
 mod commands;
 mod database;
@@ -167,8 +168,6 @@ fn main() {
                     }
                 })
                 .command("ping", |c| c.cmd(commands::meta::ping))
-                .command("multiply", |c| c.cmd(commands::math::multiply))
-                .command("fib", |c| c.cmd(commands::math::fibonacci))
                 .command("uptime", |c| c.cmd(commands::meta::uptime))
                 .command("quit", |c| c.cmd(commands::owner::quit).owners_only(true))
                 .command("clear", |c| c.cmd(commands::owner::clear).owners_only(true))
@@ -176,6 +175,13 @@ fn main() {
                 .command("save", |c| c.cmd(commands::owner::save).owners_only(true))
                 .command("load", |c| c.cmd(commands::owner::load).owners_only(true))
                 .group("Fun", |g| g.command("t", |c| c.cmd(commands::fun::twitch)))
+                .group("Math", |g| {
+                    let mut g = g.command("join", |c| c.cmd(commands::voice::join))
+                        .command("multiply", |c| c.cmd(commands::math::multiply))
+                        .command("fib", |c| c.cmd(commands::math::fibonacci))
+                        .command("calc", |c| c.cmd(commands::math::calc));
+                    g
+                })
                 .group("Voice", |g| {
                     let mut g = g.command("join", |c| c.cmd(commands::voice::join))
                         .command("leave", |c| c.cmd(commands::voice::leave))
