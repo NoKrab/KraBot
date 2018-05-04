@@ -45,8 +45,7 @@ use std::sync::Arc;
 use chrono::prelude::*;
 use serenity::client::bridge::gateway::ShardManager;
 use serenity::client::CACHE;
-use serenity::framework::standard::DispatchError;
-use serenity::framework::StandardFramework;
+use serenity::framework::standard::{Args, DispatchError, StandardFramework, HelpBehaviour, CommandOptions, help_commands};
 use serenity::http;
 use serenity::model::event::ResumedEvent;
 use serenity::model::gateway::Ready;
@@ -167,6 +166,30 @@ fn main() {
                         let _ = msg.channel_id.say(&format!("Try this again in {} seconds", seconds));
                     }
                 })
+                .customised_help(help_commands::with_embeds, |c| {
+                    // This replaces the information that a user can pass
+                    // a command-name as argument to gain specific information about it.
+                    c.individual_command_tip("Hello! こんにちは！Hola! Bonjour! 您好!\n\
+                If you want more information about a specific command, just pass the command as argument.")
+                        // Some arguments require a `{}` in order to replace it with contextual information.
+                        // In this case our `{}` refers to a command's name.
+                        .command_not_found_text("Could not {}, I'm sorry : (")
+                        // Another argument requiring `{}`, again replaced with the command's name.
+                        .suggestion_text("How about this command: {}, it's numero uno on the market...!")
+                        // On another note, you can set up the help-menu-filter-behaviour.
+                        // Here are all possible settings shown on all possible options.
+                        // First case is if a user lacks permissions for a command, we can hide the command.
+                        .lacking_permissions(HelpBehaviour::Hide)
+                        // If the user is nothing but lacking a certain role, we just display it hence our variant is `Nothing`.
+                        .lacking_role(HelpBehaviour::Nothing)
+                        // The last `enum`-variant is `Strike`, which ~~strikes~~ a command.
+                        .wrong_channel(HelpBehaviour::Strike)
+                    // Serenity will automatically analyse and generate a hint/tip explaining the possible
+                    // cases of a command being ~~striked~~, but only  if
+                    // `striked_commands_tip(Some(""))` keeps `Some()` wrapping an empty `String`, which is the default value.
+                    // If the `String` is not empty, your given `String` will be used instead.
+                    // If you pass in a `None`, no hint will be displayed at all.
+                })
                 .command("ping", |c| c.cmd(commands::meta::ping))
                 .command("uptime", |c| c.cmd(commands::meta::uptime))
                 .command("quit", |c| c.cmd(commands::owner::quit).owners_only(true))
@@ -179,7 +202,11 @@ fn main() {
                     let mut g = g.command("join", |c| c.cmd(commands::voice::join))
                         .command("multiply", |c| c.cmd(commands::math::multiply))
                         .command("fib", |c| c.cmd(commands::math::fibonacci))
-                        .command("calc", |c| c.cmd(commands::math::calc));
+                        .command("calc", |c| c
+                            .desc("Tries to calculate the given expressions. \nSupported operators are:\n\
+                             ! \n!=\n \n\"\" \n'' \n() \n[] \n, \n>, <, >=, <=, == \n+, -, *, /, %, \n&&, ||\n\
+                            Built-in functions: \n\nmin(), max(), len(), is_empty(), array()")
+                            .cmd(commands::math::calc));
                     g
                 })
                 .group("Voice", |g| {
