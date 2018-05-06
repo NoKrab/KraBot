@@ -22,3 +22,24 @@ command!(get_imgs(_ctx, msg, args) {
         let _ = msg.channel_id.say("?????");
     }
 });
+
+command!(get_albums(_ctx, msg, args) {
+ if let Some(result) = Account::albums() {
+        let albums = match result.as_array() {
+                Some(array) => array.to_owned(),
+                None => Vec::new(),
+        };
+        let _ = msg.channel_id.send_message(|mut m| {
+            m.content("Imgur Albums");
+            m.embed(|mut e| {
+            for album in &albums {
+                e.field(&album["title"].as_str().unwrap(), &album["link"].as_str().unwrap(), false);
+            }
+            e
+            });
+            m
+        });
+    } else {
+        let _ = msg.channel_id.say("?????");
+    }
+});

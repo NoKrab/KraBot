@@ -80,7 +80,27 @@ impl Account {
                 return None;
             }
         } else {
-            info!("RIP");
+            return None;
+        }
+    }
+
+    pub fn albums() -> Option<Value> {
+        let mut headers = Headers::new();
+        headers.set(
+            Authorization(
+                Bearer {
+                    token: ACCESS_TOKEN.lock().unwrap().to_owned()
+                }
+            )
+        );
+        let request = SimpleRequest::new().headers(headers).uri("https://api.imgur.com/3/account/me/albums".to_string()).method(Method::Get);
+        if let Some(result) = make_imgur_request(request) {
+            if result["success"] == true {
+                return Some(result["data"].to_owned());
+            } else {
+                return None;
+            }
+        } else {
             return None;
         }
     }

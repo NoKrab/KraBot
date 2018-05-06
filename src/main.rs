@@ -227,7 +227,8 @@ fn main() {
                 if let Some(ref imgur_client_id) = CONFIG.optional.imgur_client_id {
                     info!("Imgur API enabled.");
                     f = f.group("Imgur", |g| {
-                        let mut g = g.command("imgs", |c| c.cmd(commands::imgur::get_imgs));
+                        let mut g = g.command("imgs", |c| c.cmd(commands::imgur::get_imgs))
+                            .command("albums", |c| c.cmd(commands::imgur::get_albums));
                         g
                     });
                 }
