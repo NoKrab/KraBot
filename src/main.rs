@@ -262,7 +262,6 @@ fn main() {
     if let Err(why) = client.start_shards(CONFIG.required.shards).map_err(|why| error!("Client ended: {:?}", why)) {
         error!("Client error: {:?}", why);
     }
-    */
     if let Err(why) = client.start_autosharded() {
         error!("Failed to start {:?}", why);
     }
