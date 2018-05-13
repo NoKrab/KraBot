@@ -3,8 +3,9 @@ use util::network::request::request::SimpleRequest;
 use std::sync::Mutex;
 use hyper::header::{ContentType, Headers, Authorization, Bearer};
 use hyper::{Method};
+use postgres::rows::{Rows, Row};
 use serde_json::Value;
-
+use database::postgres::postgres as pg_backend;
 
 lazy_static! {
     static ref ACCESS_TOKEN: Mutex<String> = Mutex::new("".to_string());
@@ -106,6 +107,34 @@ impl Account {
     }
 }
 
+impl Album {
+    pub fn album_images(guild_id: i64) -> Option<Value> {
+        let mut headers = Headers::new();
+        headers.set(
+            Authorization(
+                Bearer {
+                    token: ACCESS_TOKEN.lock().unwrap().to_owned()
+                }
+            )
+        );
+        let uri = format!(
+            "https://api.imgur.com/3/album/{}/images",
+            get_current_album_id(guild_id)
+
+        );
+        let request = SimpleRequest::new().headers(headers).uri(uri).method(Method::Get);
+        if let Some(result) = make_imgur_request(request) {
+            if result["success"] == true {
+                return Some(result["data"].to_owned());
+            } else {
+                return None;
+            }
+        } else {
+            return None;
+        }
+    }
+}
+
 fn make_imgur_request(request: SimpleRequest) -> Option<Value> {
     if let Some(result) = request.clone().run() {
         if result["status"] == 403 {
@@ -126,5 +155,23 @@ fn make_imgur_request(request: SimpleRequest) -> Option<Value> {
         return Some(result);
     } else {
        return None;
+    }
+}
+
+pub fn set_album_id(album_id: &str, guild_id: i64) {
+    pg_backend::execute_sql("UPDATE settings SET imgur_album_id = $1 WHERE guild_id = $2", &[&album_id, &guild_id]);
+}
+
+pub fn get_current_album_id(guild_id: i64) -> String {
+    if let Some(rows) = pg_backend::query_sql("SELECT imgur_album_id FROM settings WHERE guild_id = $1", &[&guild_id]) {
+        let mut album_id: String = "".to_string();
+        for row in &rows {
+            let album_id_row: String = row.get(0);
+            debug!("Current Album: {}", album_id_row);
+            album_id = album_id_row;
+        }
+        return album_id;
+    } else {
+        return "No album set.".to_string();
     }
 }
