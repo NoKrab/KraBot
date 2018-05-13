@@ -1,6 +1,7 @@
 use postgres::stmt::Statement;
 use postgres::types::ToSql;
 use postgres::{Connection, Error, TlsMode};
+use postgres::rows::Rows;
 use r2d2;
 use r2d2_postgres::{PostgresConnectionManager, TlsMode as r2d2_TlsMode};
 use serenity::client::CACHE;
@@ -43,6 +44,7 @@ fn create_tables(pool: &r2d2::Pool<PostgresConnectionManager>) {
             (
                 guild_id            BIGINT NOT NULL,
                 yt_search_results   INTEGER DEFAULT 5 NOT NULL,
+                imgur_album_id      VARCHAR,
                 PRIMARY KEY (guild_id),
                 FOREIGN KEY (guild_id) REFERENCES guild (guild_id)
             );
@@ -67,11 +69,31 @@ fn insert_guild_ids(pool: &r2d2::Pool<PostgresConnectionManager>, ids: Vec<u64>)
     for g in ids {
         let g = g as i64;
         conn.execute("INSERT INTO guild (guild_id) VALUES ($1) ON CONFLICT DO NOTHING", &[&g]).unwrap();
+        conn.execute("INSERT INTO settings (guild_id) VALUES ($1) ON CONFLICT DO NOTHING", &[&g]).unwrap();
     }
 }
 
 pub fn init_db() {
     let pool = &PGPOOL.clone();
+    let guild_ids = data::get_guild_ids();
+    debug!("Guild_ids: {:?}", guild_ids);
     create_tables(pool);
-    insert_guild_ids(pool, data::get_guild_ids());
+    insert_guild_ids(pool, guild_ids);
+}
+
+pub fn execute_sql(sql: &str, params: &[&ToSql]) {
+    let pool = &PGPOOL.clone();
+    let conn = pool.get().unwrap();
+    conn.execute(sql, params).unwrap();
+}
+
+pub fn query_sql(sql: &str, params: &[&ToSql]) -> Option<Rows> {
+    let pool = &PGPOOL.clone();
+    let conn = pool.get().unwrap();
+    let stmt = conn.prepare(sql).unwrap();
+    if let Ok(rows) = stmt.query(params) {
+        return Some(rows);
+    } else {
+        return None;
+    }
 }
