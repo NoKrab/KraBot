@@ -23,6 +23,7 @@ extern crate transient_hashmap;
 extern crate typemap;
 extern crate uuid;
 extern crate eval;
+extern crate rand;
 
 mod commands;
 mod database;
