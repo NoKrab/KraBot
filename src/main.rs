@@ -23,7 +23,6 @@ extern crate transient_hashmap;
 extern crate typemap;
 extern crate uuid;
 extern crate eval;
-extern crate rand;
 
 mod commands;
 mod database;
@@ -230,17 +229,16 @@ fn main() {
                     f = f.group("Imgur", |g| {
                         let mut g = g.command("imgs", |c| c.cmd(commands::imgur::get_imgs))
                             .command("albums", |c| c.cmd(commands::imgur::get_albums))
-                            .command("set_album", |c| c.cmd(commands::imgur::set_album))
+                        .command("set_album", |c| c.cmd(commands::imgur::set_album))
                             .command("get_current_album", |c| c.cmd(commands::imgur::get_current_album))
-                            .command("img", |c| c.cmd(commands::imgur::query_img));
-                        g
+                            .command("img", |c| c.cmd(commands::imgur::query_img));g
                     });
                 }
 
 
-            f = f.command("commands", |c| c.cmd(commands::meta::commands));
-            f
-        };
+        f = f.command("commands", |c| c.cmd(commands::meta::commands));
+        f
+    };
 
     client.with_framework(
         framework
@@ -262,6 +260,10 @@ fn main() {
 
     if let Err(why) = client.start_shards(CONFIG.required.shards).map_err(|why| error!("Client ended: {:?}", why)) {
         error!("Client error: {:?}", why);
+    }
+    */
+    if let Err(why) = client.start_autosharded() {
+        error!("Failed to start {:?}", why);
     }
 }
 
