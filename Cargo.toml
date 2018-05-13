@@ -27,13 +27,17 @@ postgres = { version = "0.15", features = ["with-uuid", "with-time"] }
 r2d2 = "0.8"
 r2d2_postgres = "0.14"
 eval = "0.4.2"
+rand = "0.4.2"
+
+
 
 [dependencies.lazy_static]
 version = "1.0"
 
 [dependencies.serenity]
-git = "https://github.com/zeyla/serenity.git"
-branch = "v0.6.x"
+# git = "https://github.com/zeyla/serenity.git"
+# branch = "v0.6.x"
+version = "0.5.3"
 features = ["builder", "cache", "client" ,"framework", "gateway", "http", "model", "standard_framework", "utils", "voice"]
 
 [dependencies.rusqlite]
