@@ -228,8 +228,8 @@ fn main() {
                 if let Some(ref imgur_client_id) = CONFIG.optional.imgur_client_id {
                     info!("Imgur API enabled.");
                     f = f.group("Imgur", |g| {
-                        let mut g = g.command("imgs", |c| c.cmd(commands::imgur::get_imgs))
-                            .command("albums", |c| c.cmd(commands::imgur::get_albums))
+                        let mut g = //g.command("imgs", |c| c.cmd(commands::imgur::get_imgs))
+                            g.command("albums", |c| c.cmd(commands::imgur::get_albums))
                         .command("set_album", |c| c.cmd(commands::imgur::set_album))
                             .command("get_current_album", |c| c.cmd(commands::imgur::get_current_album))
                             .command("img", |c| c.cmd(commands::imgur::query_img));g
