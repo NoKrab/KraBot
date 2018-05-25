@@ -85,6 +85,7 @@ command!(join(ctx, msg, args) {
             return Ok(());
         },
     };
+    info!("{}", guild_id);
 
     //Gets HashMap from all Users in the current guild which are in a Voice Channel: (UserID ->VoiceState)
     let voice_members = match CACHE.read().guild(guild_id) {
@@ -93,9 +94,12 @@ command!(join(ctx, msg, args) {
         },
         None => {
             return Ok(());
+
+            check_msg(msg.channel_id.say("No users in voice channel"));
+
         },
     };
-     println!("User in Voice: {:#?}", voice_members);
+     info!("User in Voice: {:#?}", voice_members);
 
     //If User is in Voice join VoiceChannel...
     if voice_members.contains_key(&msg.author.id) {             //Searches for Key (UserId) in HashMap

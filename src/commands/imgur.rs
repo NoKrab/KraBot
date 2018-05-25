@@ -104,26 +104,18 @@ command!(query_img(_ctx, msg, args) {
         let mut matched_imgs: Vec<usize> = Vec::new();
         let args: Vec<&str> = args.full().split(' ').collect(); //Splits args of msg e.g. "a b" into ["a", "b"]
 
-        info!("{:?}", &args);
         for (i, img) in images.iter().enumerate() {
             let description = &img["description"].as_str().unwrap();
-            info!("Desc: {}", description);
             let mut match_count: i32 = -1;
             for mat in RE_TAGS.find_iter(description) {
-                info!("Tags Loop...");
                 for arg in &args {
-                    info!("Args Loop...[{}]", &arg);
                     let tag: String = mat.as_str().to_owned().replace("#", "");
-                    info!("Tag: {}", &tag);
                     if &tag == arg {
-                        info!("GEIL!!!");
                         match_count = match_count + 1;
-                    } else {
-                        info!("Schade :(");
                     }
                 }
             }
-            info!("Matched: {}", match_count + 1);
+            debug!("Matched: {}", match_count + 1);
             if match_count > best_match_count {
                 matched_imgs.clear();
                 matched_imgs.push(i);
@@ -132,16 +124,16 @@ command!(query_img(_ctx, msg, args) {
                 matched_imgs.push(i);
             }
         }
-        info!("Result: {:?}", &matched_imgs);
-        info!("Result Length: {}", matched_imgs.len());
-        info!("Best match count: {}", best_match_count);
+        debug!("Result: {:?}", &matched_imgs);
+        debug!("Result Length: {}", matched_imgs.len());
+        debug!("Best match count: {}", best_match_count);
         if best_match_count > -1 {
             match matched_imgs.len() {
                 1 => check_msg(msg.channel_id.say(&images[matched_imgs[0]]["link"])),
                 _ => {
                     let mut rng = rand::thread_rng();
                     let number = rng.gen_range(0, matched_imgs.len());
-                    info!("RNG: {}", number);
+                    debug!("RNG: {}", number);
                     check_msg(msg.channel_id.say(&images[matched_imgs[number]]["link"]))
                 }
             }
