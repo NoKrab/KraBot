@@ -1,8 +1,4 @@
 pipeline {
-    agent {
-        label 'RHEL'
-    }
-
     stages {
         stage('Build') {
             steps {
