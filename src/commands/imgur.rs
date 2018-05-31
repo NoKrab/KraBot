@@ -134,7 +134,7 @@ command!(query_img(_ctx, msg, args) {
                     let mut rng = rand::thread_rng();
                     let number = rng.gen_range(0, matched_imgs.len());
                     debug!("RNG: {}", number);
-                    check_msg(msg.channel_id.say(&images[matched_imgs[number]]["link"]))
+                    check_msg(msg.channel_id.say(&images[matched_imgs[number]]["link"].as_str().unwrap()))
                 }
             }
         } else {

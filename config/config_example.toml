@@ -9,4 +9,7 @@ pg_connection_url = "postgres://username:password@hostname/database"
 [optional]
 #database_name = "" # defaults to rsbot.db if nothing is entered
 #youtube_token = ""
+imgur_client_id = "my id"
+imgur_client_secret = "my secret"
+imgur_refresh_token = "my token"
 setting = true
