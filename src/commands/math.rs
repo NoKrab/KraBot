@@ -28,9 +28,9 @@ command!(calc(_ctx, msg, args) {
 });
 
 fn fib(n: u64) -> u64 {
-    if n <= 1 {
-        return n;
-    } else {
-        fib(n - 1) + fib(n - 2)
+    match n {
+        0 => 1,
+        1 => 1,
+        n => fib(n-1) + fib(n-2),
     }
 }
