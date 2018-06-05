@@ -13,7 +13,6 @@ use serenity::Result as SerenityResult;
 use util::api::youtube::youtube::API;
 use regex::Regex;
 use CONFIG;
-
 pub struct VoiceManager;
 
 impl Key for VoiceManager {
@@ -209,7 +208,6 @@ command!(play(ctx, msg, args) {
                 return Ok(());
             },
         };
-
         let mut manager_lock = ctx.data.lock().get::<VoiceManager>().cloned().unwrap();
         let mut manager = manager_lock.lock();
 
@@ -224,7 +222,6 @@ command!(play(ctx, msg, args) {
                     return Ok(());
                 },
             };
-
             handler.play(source);
              let response = format!(
                     "Playing: {}",
