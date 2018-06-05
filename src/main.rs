@@ -198,7 +198,9 @@ fn main() {
                 .command("host", |c| c.cmd(commands::owner::host).owners_only(true))
                 .command("save", |c| c.cmd(commands::owner::save).owners_only(true))
                 .command("load", |c| c.cmd(commands::owner::load).owners_only(true))
-                .group("Fun", |g| g.command("t", |c| c.cmd(commands::fun::twitch)))
+                .group("Fun", |g| g.command("t", |c| c.cmd(commands::fun::twitch))
+                    .command("flip", |c| c.cmd(commands::fun::flip))
+                )
                 .group("Math", |g| {
                     let mut g = g.command("join", |c| c.cmd(commands::voice::join))
                         .command("multiply", |c| c.cmd(commands::math::multiply))
