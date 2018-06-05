@@ -46,3 +46,10 @@ features = ["chrono", "bundled"]
 
 [build-dependencies]
 cc = "1.0.4"
+
+[dev-dependencies]
+criterion = "0.2"
+
+[[bench]]
+name = "my_benchmark"
+harness = false
