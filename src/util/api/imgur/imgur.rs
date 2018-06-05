@@ -6,6 +6,7 @@ use hyper::{Method};
 use postgres::rows::{Rows, Row};
 use serde_json::Value;
 use database::postgres::postgres as pg_backend;
+use std::error::Error;
 
 lazy_static! {
     static ref ACCESS_TOKEN: Mutex<String> = Mutex::new("".to_string());
@@ -119,7 +120,7 @@ impl Album {
         );
         let uri = format!(
             "https://api.imgur.com/3/album/{}/images",
-            get_current_album_id(guild_id)
+            get_current_album_id(guild_id).expect("No Album set"),
 
         );
         let request = SimpleRequest::new().headers(headers).uri(uri).method(Method::Get);
@@ -158,20 +159,18 @@ fn make_imgur_request(request: SimpleRequest) -> Option<Value> {
     }
 }
 
-pub fn set_album_id(album_id: &str, guild_id: i64) {
+pub fn set_album_id(album_id: &str, guild_id: i64) -> Result<(), Box<Error>> {
     pg_backend::execute_sql("UPDATE settings SET imgur_album_id = $1 WHERE guild_id = $2", &[&album_id, &guild_id]);
+    Ok(())
 }
 
-pub fn get_current_album_id(guild_id: i64) -> String {
-    if let Some(rows) = pg_backend::query_sql("SELECT imgur_album_id FROM settings WHERE guild_id = $1", &[&guild_id]) {
-        let mut album_id: String = "".to_string();
+pub fn get_current_album_id(guild_id: i64) -> Result<String, Box<Error>> {
+        let rows = pg_backend::query_sql("SELECT imgur_album_id FROM settings WHERE guild_id = $1", &[&guild_id])?;
+        let mut album_id: String = String::new();
         for row in &rows {
             let album_id_row: String = row.get(0);
             debug!("Current Album: {}", album_id_row);
             album_id = album_id_row;
         }
-        return album_id;
-    } else {
-        return "No album set.".to_string();
-    }
+        Ok(album_id)
 }

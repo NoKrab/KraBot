@@ -62,7 +62,11 @@ command!(get_current_album(_ctx, msg) {
             return Ok(());
         },
     };
-    check_msg(msg.channel_id.say(get_current_album_id(guild_id.to_string().parse::<u64>().unwrap() as i64)));
+    if let Ok(album_id) = get_current_album_id(guild_id.to_string().parse::<u64>().unwrap() as i64) {
+        check_msg(msg.channel_id.say(album_id));
+    } else {
+        check_msg(msg.channel_id.say("there was a problem reading the album_id"));
+    }
 });
 
 command!(set_album(_ctx, msg, args) {
@@ -82,7 +86,13 @@ command!(set_album(_ctx, msg, args) {
             return Ok(());
         },
     };
-    set_album_id(&album_id, guild_id.to_string().parse::<u64>().unwrap() as i64);
+
+    if let Err(e) = set_album_id(&album_id, guild_id.to_string().parse::<u64>().unwrap() as i64) {
+        check_msg(msg.channel_id.say("oops could not insert new album_id into database"));
+    } else {
+        check_msg(msg.channel_id.say("Updated album!"));
+    }
+
 });
 
 command!(query_img(_ctx, msg, args) {

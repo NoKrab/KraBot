@@ -1,6 +1,6 @@
 use postgres::stmt::Statement;
 use postgres::types::ToSql;
-use postgres::{Connection, Error, TlsMode};
+use postgres::{Connection,  Error, TlsMode};
 use postgres::rows::Rows;
 use r2d2;
 use r2d2_postgres::{PostgresConnectionManager, TlsMode as r2d2_TlsMode};
@@ -81,19 +81,17 @@ pub fn init_db() {
     insert_guild_ids(pool, guild_ids);
 }
 
-pub fn execute_sql(sql: &str, params: &[&ToSql]) {
+pub fn execute_sql(sql: &str, params: &[&ToSql]) -> Result<(), Error> {
     let pool = &PGPOOL.clone();
     let conn = pool.get().unwrap();
-    conn.execute(sql, params).unwrap();
+    conn.execute(sql, params)?;
+    Ok(())
 }
 
-pub fn query_sql(sql: &str, params: &[&ToSql]) -> Option<Rows> {
+pub fn query_sql(sql: &str, params: &[&ToSql]) -> Result<Rows, Box<Error>> {
     let pool = &PGPOOL.clone();
     let conn = pool.get().unwrap();
     let stmt = conn.prepare(sql).unwrap();
-    if let Ok(rows) = stmt.query(params) {
-        return Some(rows);
-    } else {
-        return None;
-    }
+    let rows = stmt.query(params)?;
+    Ok(rows)
 }

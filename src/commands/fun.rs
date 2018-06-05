@@ -12,6 +12,10 @@ command!(twitch(_ctx, msg, args) {
     }
 });
 
+command!(flip(_ctx, _msg, _args) {
+
+});
+
 ///------------------------------------Functions------------------------------------
 
 /// Checks that a message successfully sent; if not, then logs why to stdout.
