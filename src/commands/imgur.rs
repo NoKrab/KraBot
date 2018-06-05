@@ -115,7 +115,6 @@ command!(query_img(_ctx, msg, args) {
                     }
                 }
             }
-            debug!("Matched: {}", match_count + 1);
             if match_count > best_match_count {
                 matched_imgs.clear();
                 matched_imgs.push(i);
@@ -124,9 +123,6 @@ command!(query_img(_ctx, msg, args) {
                 matched_imgs.push(i);
             }
         }
-        debug!("Result: {:?}", &matched_imgs);
-        debug!("Result Length: {}", matched_imgs.len());
-        debug!("Best match count: {}", best_match_count);
         if best_match_count > -1 {
             match matched_imgs.len() {
                 1 => check_msg(msg.channel_id.say(&images[matched_imgs[0]]["link"])),
