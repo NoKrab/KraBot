@@ -87,13 +87,10 @@ pub fn execute_sql(sql: &str, params: &[&ToSql]) {
     conn.execute(sql, params).unwrap();
 }
 
-pub fn query_sql(sql: &str, params: &[&ToSql]) -> Option<Rows> {
+pub fn query_sql(sql: &str, params: &[&ToSql]) -> Result<Rows, Box<Error>> {
     let pool = &PGPOOL.clone();
     let conn = pool.get().unwrap();
     let stmt = conn.prepare(sql).unwrap();
-    if let Ok(rows) = stmt.query(params) {
-        return Some(rows);
-    } else {
-        return None;
-    }
+    let rows = stmt.query(params)?;
+    Ok(rows)
 }
