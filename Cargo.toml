@@ -35,7 +35,7 @@ rand = "0.4.2"
 version = "1.0"
 
 [dependencies.serenity]
-# git = "https://github.com/zeyla/serenity.git"
+# git = "https://github.com/serenity-rs/serenity.git"
 # branch = "v0.6.x"
 version = "0.5.3"
 features = ["builder", "cache", "client" ,"framework", "gateway", "http", "model", "standard_framework", "utils", "voice"]
