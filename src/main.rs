@@ -29,6 +29,7 @@ mod commands;
 mod database;
 mod util;
 mod config;
+mod audio;
 
 use database::postgres::postgres as pg_backend;
 
@@ -54,7 +55,6 @@ use serenity::prelude::Mutex;
 use serenity::prelude::*;
 use std::path::Path;
 use typemap::Key;
-use util::network::request::request;
 
 // What actual use does this bring?
 lazy_static! {
