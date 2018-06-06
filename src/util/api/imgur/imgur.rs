@@ -160,7 +160,7 @@ fn make_imgur_request(request: SimpleRequest) -> Option<Value> {
 }
 
 pub fn set_album_id(album_id: &str, guild_id: i64) -> Result<(), Box<Error>> {
-    pg_backend::execute_sql("UPDATE settings SET imgur_album_id = $1 WHERE guild_id = $2", &[&album_id, &guild_id]);
+    pg_backend::execute_sql("UPDATE settings SET imgur_album_id = $1 WHERE guild_id = $2", &[&album_id, &guild_id])?;
     Ok(())
 }
 
