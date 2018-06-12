@@ -12,8 +12,19 @@ command!(uptime(_ctx, msg) {
     let con = sqlite::create_connection(&*SQLITE_PATH);
     let stm = sqlite::select_shard_uptime(&con, _ctx.shard_id as i64).unwrap();
     let _ = con.close().expect("Failed to close connection");
-    debug!("{}", stm);
-    let _ = msg.channel_id.say(&format!("Uptime! Initial Connection time: {:#?}", stm));
+
+    let secs_total = stm.num_seconds();
+    let days = (secs_total / (60 * 60 * 24)) as u32;
+    let hours = (secs_total / (60 * 60)) as u32;
+    let minutes = (secs_total / 60) as u32;
+    let secounds = (secs_total % 60) as u32;
+
+    let _ = msg.channel_id.say(format!("{}d {}h {}m {}s", 
+        days,
+        hours,
+        minutes,
+        secounds
+    ));
 });
 
 command!(commands(ctx, msg, _args) {
