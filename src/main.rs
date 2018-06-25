@@ -31,6 +31,7 @@ mod util;
 mod config;
 mod audio;
 
+use util::threads::uptime;
 use database::postgres::postgres as pg_backend;
 
 use commands::voice::VoiceManager;
@@ -95,6 +96,7 @@ impl EventHandler for Handler {
         let guilds = CACHE.read().guilds.len();
         debug!("Guilds in the Cache: {}", guilds);
         pg_backend::init_db();
+        uptime::init(ctx);
     }
     fn resume(&self, _: Context, _: ResumedEvent) {
         info!("Resumed");
