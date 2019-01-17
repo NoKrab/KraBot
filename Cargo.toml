@@ -35,9 +35,9 @@ rand = "0.4.2"
 version = "1.0"
 
 [dependencies.serenity]
-git = "https://github.com/serenity-rs/serenity"
-branch = "master"
-# version = "0.5.3"
+#git = "https://github.com/serenity-rs/serenity"
+#branch = "master"
+version = "0.5.11"
 features = ["builder", "cache", "client" ,"framework", "gateway", "http", "model", "standard_framework", "utils", "voice"]
 
 [dependencies.rusqlite]
