@@ -10,7 +10,7 @@ command!(multiply(_ctx, msg, args) {
 });
 
 command!(fibonacci(_ctx, msg, args) {
-    let n = args.single::<u64>().unwrap();
+    let n = args.single::<u128>().unwrap();
     let _ = msg.channel_id.say(fib(n));
 });
 
@@ -27,16 +27,16 @@ command!(calc(_ctx, msg, args) {
     }
 });
 
-fn fib(n: u64) -> u64 {
-    let mut a = 0u64;
-    let mut b = 1u64;
-    let mut c = 0u64;
+fn fib(n: u128) -> u128 {
+    let mut a = 0u128;
+    let mut b = 1u128;
+    let mut c = 0u128;
 
     if n == 0 {
-        return 0
+        return 0;
     }
 
-    for _ in 0..(n-1) {
+    for _ in 0..(n - 1) {
         c = a + b;
         a = b;
         b = c;
