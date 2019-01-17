@@ -1,10 +1,9 @@
-use serenity::prelude::Context;
 use database::sqlite::sqlite;
-use SQLITE_PATH;
+use serenity::model::gateway::Game;
+use serenity::prelude::Context;
 use std::thread;
 use std::time::Duration;
-
-
+use SQLITE_PATH;
 
 pub fn init(ctx: Context) {
     info!("Spawned uptime thread");
@@ -19,16 +18,10 @@ pub fn init(ctx: Context) {
         let hours = (secs_total / (60 * 60)) as u32;
         secs_total %= 3600;
         let minutes = (secs_total / 60) as u32;
-        let secounds = (secs_total % 60) as u32;
+        let seconds = (secs_total % 60) as u32;
 
+        ctx.set_game(Game::playing(&format!("{}d {}h {}m {}s", days, hours, minutes, seconds)));
 
-        ctx.set_game_name(&format!("{}d {}h {}m {}s", 
-            days,
-            hours,
-            minutes,
-            secounds
-        ));
-        
         thread::sleep(Duration::from_secs(60));
     });
 }
