@@ -5,7 +5,7 @@ variables:
   CARGO_HOME: $CI_PROJECT_DIR/cargo
 
 build:
-  image: "rust"
+  image: "htli/rust-nightly"
   before_script:
     - apt-get update -qq && apt-get install -y -qq libssl-dev pkg-config libsqlite3-dev libsodium-dev clang
     - cargo --version
