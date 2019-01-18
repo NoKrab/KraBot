@@ -8,9 +8,9 @@ build:
   image: "rust:stretch"
   before_script:
     - apt-get update -qq && apt-get upgrade -y -qq && apt-get install -y -qq libssl-dev pkg-config libsqlite3-dev clang
-    - apt-get -y -qq remove libsodium-dev
+    - apt-get remove -y -qq libsodium-dev
     - threads=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
-    - git clone https://github.com/jedisct1/libsodium -b stable && cd libsodium && ./autogen.sh && ./configure && make -j$threads && make install
+    - git clone https://github.com/jedisct1/libsodium -b stable && cd libsodium && ./autogen.sh && ./configure && make -s -j$threads && make -s install
     - cargo --version
     - rustc --version
     - cargo update

@@ -5,7 +5,10 @@ authors = ["raymond.mao","daniel.holzner"]
 publish = false
 
 [profile.release]
-lto = true
+lto = "thin"
+codegen-units = 1
+debuginfo = 0
+opt-level = 3
 
 [dependencies]
 toml = "0.4"
