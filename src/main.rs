@@ -24,6 +24,7 @@ extern crate typemap;
 extern crate uuid;
 extern crate eval;
 extern crate rand;
+extern crate reqwest;
 
 mod commands;
 mod database;
