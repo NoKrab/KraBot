@@ -1,3 +1,4 @@
+use super::models::{Items, SearchResult};
 use regex::Regex;
 use reqwest::get;
 use serenity::model::channel::Message;
@@ -11,71 +12,6 @@ lazy_static! {
     ///Compiling Regex only one time for better performance
     /// Regex from https://stackoverflow.com/questions/2742813/how-to-validate-youtube-video-ids
     static ref RE_LINKS: Regex = Regex::new(r"[^a-zA-Z0-9_-]").unwrap();
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Default {
-    pub url: String,
-    pub width: u64,
-    pub height: u64,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Id {
-    pub kind: String,
-    #[serde(rename = "videoId")]
-    pub video_id: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct PageInfo {
-    #[serde(rename = "totalResults")]
-    total_results: u64,
-    #[serde(rename = "resultsPerPage")]
-    results_per_page: u64,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct SearchResult {
-    kind: String,
-    etag: String,
-    #[serde(rename = "nextPageToken")]
-    next_page_token: String,
-    #[serde(rename = "regionCode")]
-    region_code: String,
-    #[serde(rename = "pageInfo")]
-    page_info: PageInfo,
-    items: Vec<Items>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Snippet {
-    #[serde(rename = "publishedAt")]
-    pub published_at: String,
-    #[serde(rename = "channelId")]
-    pub channel_id: String,
-    pub title: String,
-    pub description: String,
-    pub thumbnails: Thumbnails,
-    #[serde(rename = "channelTitle")]
-    pub channel_title: String,
-    #[serde(rename = "liveBroadcastContent")]
-    pub live_broadcast_content: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Thumbnails {
-    pub default: Default,
-    pub medium: Default,
-    pub high: Default,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Items {
-    pub kind: String,
-    pub etag: String,
-    pub id: Id,
-    pub snippet: Snippet,
 }
 
 pub struct API {}
@@ -95,7 +31,7 @@ impl API {
                 let uri: &str = &*uri;
 
                 // this might get messy
-                // TODO make function safe to use, incase a key is missing from the response
+                // TODO make function safe to use, in case a key is missing from the response
                 // this WILL CRASH
                 let res: SearchResult = get(uri).unwrap().json().unwrap();
 
