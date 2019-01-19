@@ -1,18 +1,15 @@
-use serenity::voice::{Handler, LockedAudio, AudioSource};
 use serenity::prelude::Mutex;
 use serenity::voice;
+use serenity::voice::{AudioSource, Handler, LockedAudio};
 
 pub struct AudioTrack {
     source: Box<AudioSource>,
-    title: String
+    title: String,
 }
 
 impl AudioTrack {
     pub fn new(source: Box<AudioSource>, title: String) -> AudioTrack {
-        AudioTrack {
-            source,
-            title
-        }
+        AudioTrack { source, title }
     }
 }
 
@@ -23,10 +20,7 @@ pub struct TrackManager {
 
 impl TrackManager {
     pub fn new() -> TrackManager {
-        TrackManager {
-            queue: Vec::new(),
-            current: 0
-        }
+        TrackManager { queue: Vec::new(), current: 0 }
     }
     pub fn add_track(mut self, track: AudioTrack) {
         self.queue.push(track);

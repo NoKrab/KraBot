@@ -1,7 +1,7 @@
+use postgres::rows::Rows;
 use postgres::stmt::Statement;
 use postgres::types::ToSql;
-use postgres::{Connection,  Error, TlsMode};
-use postgres::rows::Rows;
+use postgres::{Connection, Error, TlsMode};
 use r2d2;
 use r2d2_postgres::{PostgresConnectionManager, TlsMode as r2d2_TlsMode};
 use serenity::client::CACHE;
@@ -54,7 +54,8 @@ fn create_tables(pool: &r2d2::Pool<PostgresConnectionManager>) {
 
             CREATE INDEX IF NOT EXISTS IFK_Rel_01
                 ON settings (guild_id);",
-    ).unwrap();
+    )
+    .unwrap();
 }
 
 fn insert_guild_ids(pool: &r2d2::Pool<PostgresConnectionManager>, ids: Vec<u64>) {

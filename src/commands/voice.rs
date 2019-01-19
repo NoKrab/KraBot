@@ -1,6 +1,4 @@
-use std::sync::Arc;
-use std::str;
-use typemap::Key;
+use regex::Regex;
 use serenity::client::bridge::voice::ClientVoiceManager;
 use serenity::client::CACHE;
 use serenity::model::channel::Message;
@@ -10,8 +8,10 @@ use serenity::prelude::Mutex;
 use serenity::prelude::*;
 use serenity::voice;
 use serenity::Result as SerenityResult;
+use std::str;
+use std::sync::Arc;
+use typemap::Key;
 use util::api::youtube::youtube::API;
-use regex::Regex;
 use CONFIG;
 pub struct VoiceManager;
 
@@ -302,10 +302,9 @@ fn check_msg(result: SerenityResult<Message>) {
 ///Checks if play-command parameter is URL or Number
 fn get_url(s: &str, user_id: &UserId) -> String {
     let re = Regex::new(r"^[1-5]").unwrap();
-    if re.is_match(s)  {
+    if re.is_match(s) {
         return API::get_url(user_id, s.parse::<usize>().unwrap() - 1); //-1 because indexing starts at 0
     } else {
         return String::from(s);
     }
 }
-

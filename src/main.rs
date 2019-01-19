@@ -13,27 +13,27 @@ extern crate serde_derive;
 extern crate serde_json;
 #[macro_use]
 extern crate serenity;
+extern crate eval;
 extern crate postgres;
 extern crate r2d2;
 extern crate r2d2_postgres;
+extern crate rand;
 extern crate regex;
+extern crate reqwest;
 extern crate tokio_core;
 extern crate toml;
 extern crate transient_hashmap;
 extern crate typemap;
 extern crate uuid;
-extern crate eval;
-extern crate rand;
-extern crate reqwest;
 
+mod audio;
 mod commands;
+mod config;
 mod database;
 mod util;
-mod config;
-mod audio;
 
-use util::threads::uptime;
 use database::postgres::postgres as pg_backend;
+use util::threads::uptime;
 
 use commands::voice::VoiceManager;
 use config::Config;
@@ -49,7 +49,7 @@ use std::sync::Arc;
 use chrono::prelude::*;
 use serenity::client::bridge::gateway::ShardManager;
 use serenity::client::CACHE;
-use serenity::framework::standard::{Args, DispatchError, StandardFramework, HelpBehaviour, CommandOptions, help_commands};
+use serenity::framework::standard::{help_commands, Args, CommandOptions, DispatchError, HelpBehaviour, StandardFramework};
 use serenity::http;
 use serenity::model::event::ResumedEvent;
 use serenity::model::gateway::Ready;
@@ -77,10 +77,7 @@ impl EventHandler for Handler {
             // Note that array index 0 is 0-indexed, while index 1 is 1-indexed.
             //
             // This may seem unintuitive, but it models Discord's behaviour.
-            info!(
-                "{} is connected on shard {}/{}!",
-                ready.user.name, shard[0], shard[1],
-            );
+            info!("{} is connected on shard {}/{}!", ready.user.name, shard[0], shard[1],);
             let con = sqlite::create_connection(&*SQLITE_PATH);
             sqlite::create_bot_table(&con);
             sqlite::insert_timestamp(&con, shard[0] as i64, ready.user.name);
@@ -146,7 +143,6 @@ fn main() {
         }
     };
 
-
     let framework: StandardFramework = {
         let mut f: StandardFramework = StandardFramework::new()
             .configure(|c| c.owners(owners).prefix(&*CONFIG.required.prefix).on_mention(CONFIG.required.mention).delimiters(vec![", ", ","]))
@@ -173,21 +169,23 @@ fn main() {
             .customised_help(help_commands::with_embeds, |c| {
                 // This replaces the information that a user can pass
                 // a command-name as argument to gain specific information about it.
-                c.individual_command_tip("Hello! こんにちは！Hola! Bonjour! 您好!\n\
-            If you want more information about a specific command, just pass the command as argument.")
-                    // Some arguments require a `{}` in order to replace it with contextual information.
-                    // In this case our `{}` refers to a command's name.
-                    .command_not_found_text("Could not {}, I'm sorry : (")
-                    // Another argument requiring `{}`, again replaced with the command's name.
-                    .suggestion_text("How about this command: {}, it's numero uno on the market...!")
-                    // On another note, you can set up the help-menu-filter-behaviour.
-                    // Here are all possible settings shown on all possible options.
-                    // First case is if a user lacks permissions for a command, we can hide the command.
-                    .lacking_permissions(HelpBehaviour::Hide)
-                    // If the user is nothing but lacking a certain role, we just display it hence our variant is `Nothing`.
-                    .lacking_role(HelpBehaviour::Nothing)
-                    // The last `enum`-variant is `Strike`, which ~~strikes~~ a command.
-                    .wrong_channel(HelpBehaviour::Strike)
+                c.individual_command_tip(
+                    "Hello! こんにちは！Hola! Bonjour! 您好!\n\
+                     If you want more information about a specific command, just pass the command as argument.",
+                )
+                // Some arguments require a `{}` in order to replace it with contextual information.
+                // In this case our `{}` refers to a command's name.
+                .command_not_found_text("Could not {}, I'm sorry : (")
+                // Another argument requiring `{}`, again replaced with the command's name.
+                .suggestion_text("How about this command: {}, it's numero uno on the market...!")
+                // On another note, you can set up the help-menu-filter-behaviour.
+                // Here are all possible settings shown on all possible options.
+                // First case is if a user lacks permissions for a command, we can hide the command.
+                .lacking_permissions(HelpBehaviour::Hide)
+                // If the user is nothing but lacking a certain role, we just display it hence our variant is `Nothing`.
+                .lacking_role(HelpBehaviour::Nothing)
+                // The last `enum`-variant is `Strike`, which ~~strikes~~ a command.
+                .wrong_channel(HelpBehaviour::Strike)
                 // Serenity will automatically analyse and generate a hint/tip explaining the possible
                 // cases of a command being ~~striked~~, but only  if
                 // `striked_commands_tip(Some(""))` keeps `Some()` wrapping an empty `String`, which is the default value.
@@ -201,22 +199,25 @@ fn main() {
             .command("host", |c| c.cmd(commands::owner::host).owners_only(true))
             .command("save", |c| c.cmd(commands::owner::save).owners_only(true))
             .command("load", |c| c.cmd(commands::owner::load).owners_only(true))
-            .group("Fun", |g| g.command("t", |c| c.cmd(commands::fun::twitch))
-                .command("flip", |c| c.cmd(commands::fun::flip))
-            )
+            .group("Fun", |g| g.command("t", |c| c.cmd(commands::fun::twitch)).command("flip", |c| c.cmd(commands::fun::flip)))
             .group("Math", |g| {
-                let mut g = g.command("join", |c| c.cmd(commands::voice::join))
+                let mut g = g
+                    .command("join", |c| c.cmd(commands::voice::join))
                     .command("multiply", |c| c.cmd(commands::math::multiply))
                     .command("fib", |c| c.cmd(commands::math::fibonacci))
-                    .command("calc", |c| c
-                        .desc("Tries to calculate the given expressions. \nSupported operators are:\n\
-                            ! \n!=\n \n\"\" \n'' \n() \n[] \n, \n>, <, >=, <=, == \n+, -, *, /, %, \n&&, ||\n\
-                        Built-in functions: \n\nmin(), max(), len(), is_empty(), array()")
-                        .cmd(commands::math::calc));
+                    .command("calc", |c| {
+                        c.desc(
+                            "Tries to calculate the given expressions. \nSupported operators are:\n\
+                             ! \n!=\n \n\"\" \n'' \n() \n[] \n, \n>, <, >=, <=, == \n+, -, *, /, %, \n&&, ||\n\
+                             Built-in functions: \n\nmin(), max(), len(), is_empty(), array()",
+                        )
+                        .cmd(commands::math::calc)
+                    });
                 g
             })
             .group("Voice", |g| {
-                let mut g = g.command("join", |c| c.cmd(commands::voice::join))
+                let mut g = g
+                    .command("join", |c| c.cmd(commands::voice::join))
                     .command("leave", |c| c.cmd(commands::voice::leave))
                     .command("play", |c| c.cmd(commands::voice::play))
                     .command("mute", |c| c.cmd(commands::voice::mute))
@@ -230,24 +231,23 @@ fn main() {
                 }
                 g
             });
-            if let Some(ref imgur_client_id) = CONFIG.optional.imgur_client_id {
-                info!("Imgur API enabled.");
-                f = f.group("Imgur", |g| {
-                    let mut g = //g.command("imgs", |c| c.cmd(commands::imgur::get_imgs))
+        if let Some(ref imgur_client_id) = CONFIG.optional.imgur_client_id {
+            info!("Imgur API enabled.");
+            f = f.group("Imgur", |g| {
+                let mut g = //g.command("imgs", |c| c.cmd(commands::imgur::get_imgs))
                         g.command("albums", |c| c.cmd(commands::imgur::get_albums))
                     .command("set_album", |c| c.cmd(commands::imgur::set_album))
                         .command("get_current_album", |c| c.cmd(commands::imgur::get_current_album))
-                        .command("img", |c| c.cmd(commands::imgur::query_img));g
-                });
-            }
+                        .command("img", |c| c.cmd(commands::imgur::query_img));
+                g
+            });
+        }
 
         f = f.command("commands", |c| c.cmd(commands::meta::commands));
         f
     };
 
-    client.with_framework(
-        framework
-    );
+    client.with_framework(framework);
 
     /*    thread::spawn(move || loop {
         thread::sleep(time::Duration::from_secs(30));

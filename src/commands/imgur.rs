@@ -1,11 +1,11 @@
-use serde_json::Value;
-use util::api::imgur::imgur::*;
-use serenity::client::CACHE;
-use serenity::Result as SerenityResult;
-use serenity::model::channel::{Channel, Message};
-use regex::Regex;
 use rand;
 use rand::Rng;
+use regex::Regex;
+use serde_json::Value;
+use serenity::client::CACHE;
+use serenity::model::channel::{Channel, Message};
+use serenity::Result as SerenityResult;
+use util::api::imgur::imgur::*;
 
 lazy_static! {
     static ref RE_TAGS: Regex = Regex::new(r"(#[a-zA-Z]+\b)").unwrap();
@@ -18,7 +18,7 @@ command!(get_imgs(_ctx, msg, args) {
                 None => Vec::new(),
         };
         debug!("Imgs: {:?}", items);
-        check_msg(msg.channel_id.send_message(|m| {           
+        check_msg(msg.channel_id.send_message(|m| {
             m.embed(|e| {
                 let mut e = e;
                 e = e.title("Imgur Images");

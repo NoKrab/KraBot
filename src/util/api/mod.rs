@@ -1,3 +1,3 @@
-pub mod youtube;
-pub mod twitch;
 pub mod imgur;
+pub mod twitch;
+pub mod youtube;
