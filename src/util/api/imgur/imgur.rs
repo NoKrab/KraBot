@@ -1,7 +1,9 @@
+use super::models::AccessToken;
 use database::postgres::postgres as pg_backend;
 use hyper::header::{Authorization, Bearer, ContentType, Headers};
 use hyper::Method;
 use postgres::rows::{Row, Rows};
+use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE, USER_AGENT};
 use serde_json::Value;
 use std::error::Error;
 use std::sync::Mutex;
@@ -40,34 +42,29 @@ pub struct Gallery {}
 pub struct Image {}
 
 impl Account {
+    // unwrap hell
+    // TODO make function safer
     pub fn generate_access_token() {
-        let mut headers = Headers::new();
-        headers.set(ContentType::form_url_encoded());
+        let params = [
+            ("refresh_token", REFRESH_TOKEN.lock().unwrap().to_string()),
+            ("client_id", CLIENT_ID.to_string()),
+            ("client_secret", CLIENT_SECRET.to_string()),
+            ("grant_type", "refresh_token".to_string()),
+        ];
+        let client = reqwest::Client::new();
 
-        let data = format!(
-            "refresh_token={}&&client_id={}&&client_secret={}&&grant_type=refresh_token",
-            REFRESH_TOKEN.lock().unwrap().to_string(),
-            CLIENT_ID.to_string(),
-            CLIENT_SECRET.to_string()
-        );
-        if let Some(result) = SimpleRequest::new()
-            .headers(headers)
-            .uri("https://api.imgur.com/oauth2/token".to_string())
-            .body(data)
-            .method(Method::Post)
-            .run()
-        {
-            let mut access_token = ACCESS_TOKEN.lock().unwrap();
-            let mut refresh_token = REFRESH_TOKEN.lock().unwrap();
+        let res: AccessToken = client.post("https://api.imgur.com/oauth2/token").form(&params).send().unwrap().json().unwrap();
 
-            access_token.clear();
-            access_token.insert_str(0, &result["access_token"].as_str().unwrap());
-            refresh_token.clear();
-            refresh_token.insert_str(0, &result["refresh_token"].as_str().unwrap());
+        let mut access_token = ACCESS_TOKEN.lock().unwrap();
+        let mut refresh_token = REFRESH_TOKEN.lock().unwrap();
 
-            info!("generate_access_token -> {}", access_token);
-            info!("generate_refresh_token -> {}", refresh_token);
-        }
+        access_token.clear();
+        access_token.insert_str(0, &*res.access_token);
+        refresh_token.clear();
+        refresh_token.insert_str(0, &*res.refresh_token);
+
+        debug!("generate_access_token -> {}", access_token);
+        debug!("generate_refresh_token -> {}", refresh_token);
     }
 
     pub fn account_images() -> Option<Value> {
