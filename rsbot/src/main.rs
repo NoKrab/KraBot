@@ -20,12 +20,13 @@ extern crate r2d2_postgres;
 extern crate rand;
 extern crate regex;
 extern crate reqwest;
+extern crate rsbot_lib;
+extern crate tokio;
 extern crate tokio_core;
 extern crate toml;
 extern crate transient_hashmap;
 extern crate typemap;
 extern crate uuid;
-extern crate tokio;
 
 mod audio;
 mod commands;
