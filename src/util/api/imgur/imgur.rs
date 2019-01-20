@@ -33,6 +33,7 @@ lazy_static! {
             return "".to_string();
         };
     };
+    static ref CLIENT: reqwest::Client = reqwest::Client::new();
 }
 
 pub struct Account {}
@@ -51,17 +52,15 @@ impl Account {
             ("client_secret", CLIENT_SECRET.to_string()),
             ("grant_type", "refresh_token".to_string()),
         ];
-        let client = reqwest::Client::new();
-
-        let res: AccessToken = client.post("https://api.imgur.com/oauth2/token").form(&params).send().unwrap().json().unwrap();
+        let res_json: AccessToken = CLIENT.post("https://api.imgur.com/oauth2/token").form(&params).send().unwrap().json().unwrap();
 
         let mut access_token = ACCESS_TOKEN.lock().unwrap();
         let mut refresh_token = REFRESH_TOKEN.lock().unwrap();
 
         access_token.clear();
-        access_token.insert_str(0, &*res.access_token);
+        access_token.insert_str(0, &*res_json.access_token);
         refresh_token.clear();
-        refresh_token.insert_str(0, &*res.refresh_token);
+        refresh_token.insert_str(0, &*res_json.refresh_token);
 
         debug!("generate_access_token -> {}", access_token);
         debug!("generate_refresh_token -> {}", refresh_token);
