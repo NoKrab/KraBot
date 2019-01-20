@@ -10,6 +10,9 @@ use std::sync::Mutex;
 use util::network::request::request::SimpleRequest;
 use CONFIG;
 
+use futures::Future;
+use reqwest::async::{Client, Response};
+
 lazy_static! {
     static ref ACCESS_TOKEN: Mutex<String> = Mutex::new("".to_string());
     static ref REFRESH_TOKEN: Mutex<String> = {
@@ -45,25 +48,37 @@ pub struct Image {}
 impl Account {
     // unwrap hell
     // TODO make function safer
-    pub fn generate_access_token() {
+    fn async_generate_access_token() -> impl Future<Item = (), Error = ()> {
+        let json = |mut res: Response| res.json::<AccessToken>();
         let params = [
             ("refresh_token", REFRESH_TOKEN.lock().unwrap().to_string()),
             ("client_id", CLIENT_ID.to_string()),
             ("client_secret", CLIENT_SECRET.to_string()),
             ("grant_type", "refresh_token".to_string()),
         ];
-        let res_json: AccessToken = CLIENT.post("https://api.imgur.com/oauth2/token").form(&params).send().unwrap().json().unwrap();
 
-        let mut access_token = ACCESS_TOKEN.lock().unwrap();
-        let mut refresh_token = REFRESH_TOKEN.lock().unwrap();
-
-        access_token.clear();
-        access_token.insert_str(0, &*res_json.access_token);
-        refresh_token.clear();
-        refresh_token.insert_str(0, &*res_json.refresh_token);
-
-        debug!("generate_access_token -> {}", access_token);
-        debug!("generate_refresh_token -> {}", refresh_token);
+        Client::new()
+            .post("https://api.imgur.com/oauth2/token")
+            .form(&params)
+            .send()
+            .and_then(json)
+            .map_err(|err| {
+                error!("{}", err);
+            })
+            .map(|res| {
+                debug!("{:#?}", res);
+                let mut access_token = ACCESS_TOKEN.lock().unwrap();
+                let mut refresh_token = REFRESH_TOKEN.lock().unwrap();
+                access_token.clear();
+                access_token.insert_str(0, &*res.access_token);
+                refresh_token.clear();
+                refresh_token.insert_str(0, &*res.refresh_token);
+                debug!("generate_access_token -> {}", access_token);
+                debug!("generate_refresh_token -> {}", refresh_token);
+            })
+    }
+    pub fn generate_access_token() {
+        tokio::run(Account::async_generate_access_token());
     }
 
     pub fn account_images() -> Option<Value> {
