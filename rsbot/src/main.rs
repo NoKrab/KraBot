@@ -74,7 +74,7 @@ struct ShardManagerContainer;
 
 impl EventHandler for Handler {
     fn ready(&self, ctx: Context, ready: Ready) {
-        ctx.set_game_name("Some text");
+        ctx.set_game("Some text");
         if let Some(shard) = ready.shard {
             // Note that array index 0 is 0-indexed, while index 1 is 1-indexed.
             //
@@ -112,6 +112,7 @@ impl Key for ShardManagerContainer {
 }
 
 fn main() {
+    rsbot_lib::database::ConnectionPool::new();
     match setup_logger() {
         Ok(_) => (),
         Err(why) => eprintln!("Failed to init logger: {}", why), // Since the logger isn't setup yet, we use eprintln!
