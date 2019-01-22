@@ -34,6 +34,8 @@ mod config;
 mod database;
 mod util;
 
+use rsbot_lib::database::ConnectionPool;
+
 use database::postgres::postgres as pg_backend;
 use util::threads::uptime;
 
@@ -62,6 +64,7 @@ use typemap::Key;
 
 // What actual use does this bring?
 lazy_static! {
+    static ref DIESEL_PG: ConnectionPool = ConnectionPool::new();
     static ref CONFIG: Config = Config::get_config(config::CONFIG_PATH);
     static ref SQLITE_PATH: (String, String) = Config::get_sqlite_path(config::CONFIG_PATH);
 }
@@ -84,6 +87,9 @@ impl EventHandler for Handler {
             sqlite::create_bot_table(&con);
             sqlite::insert_timestamp(&con, shard[0] as i64, ready.user.name);
             let _ = con.close().expect("Failed to close connection");
+            if let Err(e) = DIESEL_PG.new_shard(shard[0] as i32) {
+                error!("{}", e);
+            }
             // this is actually a terrible idea
             // if !Path::new("./log").exists() {
             //     fs::create_dir("./log").expect("Error creating folder")
@@ -112,7 +118,6 @@ impl Key for ShardManagerContainer {
 }
 
 fn main() {
-    rsbot_lib::database::ConnectionPool::new();
     match setup_logger() {
         Ok(_) => (),
         Err(why) => eprintln!("Failed to init logger: {}", why), // Since the logger isn't setup yet, we use eprintln!

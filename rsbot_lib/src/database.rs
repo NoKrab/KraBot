@@ -1,9 +1,14 @@
 use self::r2d2::{ConnectionManager, Pool, PooledConnection};
-use diesel::{pg::PgConnection, prelude::*, r2d2, result::Error};
+use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use diesel::{
+    pg::{upsert::*, PgConnection},
+    prelude::*,
+    r2d2,
+    result::Error,
+};
 use dotenv::dotenv;
-use std::env;
-
 use models::*;
+use std::env;
 
 #[derive(Clone)]
 pub struct ConnectionPool {
@@ -45,9 +50,32 @@ impl ConnectionPool {
 
     pub fn new_guild(&self, guild_id: i64) -> Result<Guild, Error> {
         use schema::guilds;
-        let new_guild_obj = NewGuild { id: guild_id as i64, prefix: None };
+        let new_guild_obj = NewGuild {
+            id: guild_id as i64,
+            prefix: None,
+            youtube_results: None,
+            imgur_album_id: None,
+        };
         let conn = self.connection();
         diesel::insert_into(guilds::table).values(&new_guild_obj).get_result::<Guild>(&conn)
+    }
+
+    // one could use diesel::dsl::now to insert database timestamp,
+    // but we care about the timestamp on our side
+    pub fn new_shard(&self, shard_id: i32) -> Result<usize, Error> {
+        use schema::shards::dsl::*;
+        let new_shard_obj = Shard {
+            id: shard_id as i32,
+            chrono_timestamp: Utc::now().naive_utc(),
+        };
+        let conn = self.connection();
+
+        diesel::insert_into(shards)
+            .values(&new_shard_obj)
+            .on_conflict(id)
+            .do_update()
+            .set(chrono_timestamp.eq(Utc::now().naive_utc()))
+            .execute(&conn)
     }
 }
 
