@@ -77,6 +77,21 @@ impl ConnectionPool {
             .set(chrono_timestamp.eq(Utc::now().naive_utc()))
             .execute(&conn)
     }
+    pub fn get_shard_timestamp(&self, shard_id: i32) -> Result<Shard, Error> {
+        use schema::shards::dsl::*;
+        let conn = self.connection();
+        let shard = shards.filter(id.eq(shard_id as i32)).first::<Shard>(&conn);
+        if let Err(e) = shard {
+            match e {
+                _ => {
+                    error!("Failed retrieving the timestamp from the database: {}", e);
+                    return Err(e);
+                }
+            }
+        } else {
+            return shard;
+        }
+    }
 }
 
 pub fn establish_connection() -> PgConnection {
