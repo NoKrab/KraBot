@@ -1,19 +1,18 @@
-use database::sqlite::sqlite;
 use std::fmt::Write;
 use CommandCounter;
-use SQLITE_PATH;
+use DIESEL_PG;
+use chrono::Utc;
 
 command!(ping(_ctx, msg) {
     let _ = msg.channel_id.say("Pong!");
     info!("Shard {}", _ctx.shard_id);
 });
 
-command!(uptime(_ctx, msg) {
-    let con = sqlite::create_connection(&*SQLITE_PATH);
-    let stm = sqlite::select_shard_uptime(&con, _ctx.shard_id as i64).unwrap();
-    let _ = con.close().expect("Failed to close connection");
+command!(uptime(ctx, msg) {
+    let shard = DIESEL_PG.get_shard_timestamp(ctx.shard_id as i32).unwrap();
+    let duration = Utc::now().naive_utc().signed_duration_since(shard.chrono_timestamp);
 
-    let mut secs_total = stm.num_seconds();
+    let mut secs_total = duration.num_seconds();
     let days = (secs_total / (86400)) as u32;
     secs_total %= 86400;
     let hours = (secs_total / (60 * 60)) as u32;
