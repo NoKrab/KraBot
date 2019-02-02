@@ -1,9 +1,9 @@
+use chrono::Utc;
 use serenity::model::gateway::Game;
 use serenity::prelude::Context;
 use std::thread;
 use std::time::Duration;
 use DIESEL_PG;
-use chrono::Utc;
 
 pub fn init(ctx: Context) {
     info!("Spawned uptime thread");

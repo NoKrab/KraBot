@@ -1,7 +1,7 @@
+use chrono::Utc;
 use std::fmt::Write;
 use CommandCounter;
 use DIESEL_PG;
-use chrono::Utc;
 
 command!(ping(_ctx, msg) {
     let _ = msg.channel_id.say("Pong!");

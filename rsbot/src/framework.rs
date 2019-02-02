@@ -1,8 +1,8 @@
-use std::collections::HashMap;
-use std::collections::HashSet;
 use chrono::prelude::*;
 use serenity::framework::standard::{help_commands, DispatchError, HelpBehaviour, StandardFramework};
 use serenity::http;
+use std::collections::HashMap;
+use std::collections::HashSet;
 use typemap::Key;
 use CONFIG;
 

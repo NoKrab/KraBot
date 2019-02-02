@@ -32,8 +32,8 @@ mod audio;
 mod commands;
 mod config;
 mod database;
-mod util;
 mod framework;
+mod util;
 
 use rsbot_lib::database::ConnectionPool;
 
@@ -52,6 +52,7 @@ use std::sync::Arc;
 // use std::fs::File;
 // use std::io::Write;
 use chrono::prelude::*;
+use framework::{get_framework, CommandCounter};
 use serenity::client::bridge::gateway::ShardManager;
 use serenity::client::CACHE;
 use serenity::framework::standard::{help_commands, Args, CommandOptions, DispatchError, HelpBehaviour, StandardFramework};
@@ -62,7 +63,6 @@ use serenity::prelude::Mutex;
 use serenity::prelude::*;
 use std::path::Path;
 use typemap::Key;
-use framework::{get_framework, CommandCounter};
 
 // What actual use does this bring?
 lazy_static! {

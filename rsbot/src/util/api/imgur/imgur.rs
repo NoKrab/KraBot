@@ -4,6 +4,7 @@ use hyper::header::{Authorization, Bearer, ContentType, Headers};
 use hyper::Method;
 use postgres::rows::{Row, Rows};
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE, USER_AGENT};
+use serde_derive;
 use serde_json::Value;
 use std::error::Error;
 use std::sync::Mutex;
@@ -38,6 +39,8 @@ lazy_static! {
     };
     static ref CLIENT: reqwest::Client = reqwest::Client::new();
 }
+
+type Result<T> = std::result::Result<T, Box<Error>>;
 
 pub struct Account {}
 pub struct Comment {}
@@ -82,57 +85,77 @@ impl Account {
     }
 
     pub fn account_images() -> Option<Value> {
-        let mut headers = Headers::new();
-        headers.set(Authorization(Bearer {
-            token: ACCESS_TOKEN.lock().unwrap().to_owned(),
-        }));
-        let request = SimpleRequest::new().headers(headers).uri("https://api.imgur.com/3/account/me/images".to_string()).method(Method::Get);
-        if let Some(result) = make_imgur_request(request) {
-            if result["success"] == true {
-                return Some(result["data"].to_owned());
-            } else {
-                return None;
-            }
+        Account::get_data("https://api.imgur.com/3/account/me/images").unwrap()
+        // let mut headers = Headers::new();
+        // headers.set(Authorization(Bearer {
+        //     token: ACCESS_TOKEN.lock().unwrap().to_owned(),
+        // }));
+        // let request = SimpleRequest::new().headers(headers).uri("https://api.imgur.com/3/account/me/images".to_string()).method(Method::Get);
+        // if let Some(result) = make_imgur_request(request) {
+        //     if result["success"] == true {
+        //         return Some(result["data"].to_owned());
+        //     } else {
+        //         return None;
+        //     }
+        // } else {
+        //     return None;
+        // }
+    }
+
+    // converts response to string which then gets turned into a value, we only want the data part
+    fn return_data(mut response: reqwest::Response) -> Result<serde_json::Value> {
+        let v: serde_json::Value = serde_json::from_str::<serde_json::Value>(&*response.text()?)?["data"].to_owned();
+        Ok(v)
+    }
+
+    fn get_data(uri: &str) -> Result<Option<serde_json::Value>> {
+        let mut response = CLIENT.get(uri).bearer_auth(ACCESS_TOKEN.lock()?).send()?;
+        if response.status().is_success() {
+            let v: serde_json::Value = serde_json::from_str::<serde_json::Value>(&*response.text()?)?["data"].to_owned();
+            Ok(Some(v))
+        } else if response.status().is_client_error() {
+            Account::generate_access_token();
+            // this can produce nasty loops
+            return Account::get_data(uri);
         } else {
-            return None;
+            // Err(Box::from(format!("Something else happened. Status: {:?}", response.status())))
+            Ok(None)
         }
     }
 
     pub fn albums() -> Option<Value> {
-        let mut headers = Headers::new();
-        headers.set(Authorization(Bearer {
-            token: ACCESS_TOKEN.lock().unwrap().to_owned(),
-        }));
-        let request = SimpleRequest::new().headers(headers).uri("https://api.imgur.com/3/account/me/albums".to_string()).method(Method::Get);
-        if let Some(result) = make_imgur_request(request) {
-            if result["success"] == true {
-                return Some(result["data"].to_owned());
-            } else {
-                return None;
-            }
-        } else {
-            return None;
-        }
+        // let resp = CLIENT.get("https://api.imgur.com/3/account/me/albums").bearer_auth(ACCESS_TOKEN.lock().unwrap()).send().unwrap();
+        // if resp.status().is_success() {
+        //     return Some(Account::return_data(resp).unwrap());
+        // } else if resp.status().is_client_error() {
+        //     Account::generate_access_token();
+        //     return Account::albums();
+        // } else {
+        //     error!("Something else happened. Status: {:?}", resp.status());
+        //     return None;
+        // }
+        Account::get_data("https://api.imgur.com/3/account/me/albums").unwrap()
     }
 }
 
 impl Album {
     pub fn album_images(guild_id: i64) -> Option<Value> {
-        let mut headers = Headers::new();
-        headers.set(Authorization(Bearer {
-            token: ACCESS_TOKEN.lock().unwrap().to_owned(),
-        }));
-        let uri = format!("https://api.imgur.com/3/album/{}/images", get_current_album_id(guild_id).expect("No Album set"),);
-        let request = SimpleRequest::new().headers(headers).uri(uri).method(Method::Get);
-        if let Some(result) = make_imgur_request(request) {
-            if result["success"] == true {
-                return Some(result["data"].to_owned());
-            } else {
-                return None;
-            }
-        } else {
-            return None;
-        }
+        let uri = &*format!("https://api.imgur.com/3/album/{}/images", get_current_album_id(guild_id).expect("No Album set"),);
+        Account::get_data(uri).unwrap()
+        // let mut headers = Headers::new();
+        // headers.set(Authorization(Bearer {
+        //     token: ACCESS_TOKEN.lock().unwrap().to_owned(),
+        // }));
+        // let request = SimpleRequest::new().headers(headers).uri(uri).method(Method::Get);
+        // if let Some(result) = make_imgur_request(request) {
+        //     if result["success"] == true {
+        //         return Some(result["data"].to_owned());
+        //     } else {
+        //         return None;
+        //     }
+        // } else {
+        //     return None;
+        // }
     }
 }
 
@@ -158,12 +181,12 @@ fn make_imgur_request(request: SimpleRequest) -> Option<Value> {
     }
 }
 
-pub fn set_album_id(album_id: &str, guild_id: i64) -> Result<(), Box<Error>> {
+pub fn set_album_id(album_id: &str, guild_id: i64) -> Result<()> {
     pg_backend::execute_sql("UPDATE settings SET imgur_album_id = $1 WHERE guild_id = $2", &[&album_id, &guild_id])?;
     Ok(())
 }
 
-pub fn get_current_album_id(guild_id: i64) -> Result<String, Box<Error>> {
+pub fn get_current_album_id(guild_id: i64) -> Result<String> {
     let rows = pg_backend::query_sql("SELECT imgur_album_id FROM settings WHERE guild_id = $1", &[&guild_id])?;
     let mut album_id: String = String::new();
     for row in &rows {
