@@ -1,14 +1,14 @@
 use super::models::AccessToken;
 use database::postgres::postgres as pg_backend;
-use hyper::header::{Authorization, Bearer, ContentType, Headers};
-use hyper::Method;
+// use hyper::header::{Authorization, Bearer, ContentType, Headers};
+// use hyper::Method;
 use postgres::rows::{Row, Rows};
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE, USER_AGENT};
 use serde_derive;
 use serde_json::Value;
 use std::error::Error;
 use std::sync::Mutex;
-use util::network::request::request::SimpleRequest;
+// use util::network::request::request::SimpleRequest;
 use CONFIG;
 
 use futures::Future;
@@ -159,27 +159,27 @@ impl Album {
     }
 }
 
-fn make_imgur_request(request: SimpleRequest) -> Option<Value> {
-    if let Some(result) = request.clone().run() {
-        if result["status"] == 403 {
-            info!("Requesting new token...");
-            Account::generate_access_token();
-            return request
-                .clone()
-                .headers({
-                    let mut headers = request.get_headers().unwrap();
-                    headers.set(Authorization(Bearer {
-                        token: ACCESS_TOKEN.lock().unwrap().to_owned(),
-                    }));
-                    headers
-                })
-                .run();
-        }
-        return Some(result);
-    } else {
-        return None;
-    }
-}
+// fn make_imgur_request(request: SimpleRequest) -> Option<Value> {
+//     if let Some(result) = request.clone().run() {
+//         if result["status"] == 403 {
+//             info!("Requesting new token...");
+//             Account::generate_access_token();
+//             return request
+//                 .clone()
+//                 .headers({
+//                     let mut headers = request.get_headers().unwrap();
+//                     headers.set(Authorization(Bearer {
+//                         token: ACCESS_TOKEN.lock().unwrap().to_owned(),
+//                     }));
+//                     headers
+//                 })
+//                 .run();
+//         }
+//         return Some(result);
+//     } else {
+//         return None;
+//     }
+// }
 
 pub fn set_album_id(album_id: &str, guild_id: i64) -> Result<()> {
     pg_backend::execute_sql("UPDATE settings SET imgur_album_id = $1 WHERE guild_id = $2", &[&album_id, &guild_id])?;

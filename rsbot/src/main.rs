@@ -1,8 +1,8 @@
 extern crate chrono;
 extern crate fern;
 extern crate futures;
-extern crate hyper;
-extern crate hyper_tls;
+// extern crate hyper;
+// extern crate hyper_tls;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
