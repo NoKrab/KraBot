@@ -60,6 +60,14 @@ impl ConnectionPool {
         diesel::insert_into(guilds::table).values(&new_guild_obj).get_result::<Guild>(&conn)
     }
 
+    pub fn update_guild(&self, guild: &Guild) {
+        use schema::{guilds, guilds::dsl::*};
+        let conn = self.connection();
+        if let Err(e) = diesel::update(guilds::table).filter(id.eq(guild.id)).set(guild).execute(&conn) {
+            error!("Error updating guild {}", e)
+        }
+    }
+
     // one could use diesel::dsl::now to insert database timestamp,
     // but we care about the timestamp on our side
     pub fn new_shard(&self, shard_id: i32) -> Result<usize, Error> {
