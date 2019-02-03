@@ -1,8 +1,6 @@
 use super::models::AccessToken;
-use database::postgres::postgres as pg_backend;
 // use hyper::header::{Authorization, Bearer, ContentType, Headers};
 // use hyper::Method;
-use postgres::rows::{Row, Rows};
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE, USER_AGENT};
 use serde_derive;
 use serde_json::Value;

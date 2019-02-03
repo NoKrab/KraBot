@@ -1,17 +1,10 @@
 use config;
 use config::Config;
 use database::data::get_guild_ids;
-use lazy_static;
-use pg_backend;
-use serenity::client::bridge::gateway::ShardManager;
 use serenity::client::CACHE;
-use serenity::framework::standard::{help_commands, Args, CommandOptions, DispatchError, HelpBehaviour, StandardFramework};
-use serenity::http;
 use serenity::model::event::ResumedEvent;
 use serenity::model::gateway::Ready;
-use serenity::prelude::Mutex;
 use serenity::prelude::*;
-use sqlite;
 use util::threads::uptime;
 use DIESEL_PG;
 
@@ -29,10 +22,6 @@ impl EventHandler for Handler {
             //
             // This may seem unintuitive, but it models Discord's behaviour.
             info!("{} is connected on shard {}/{}!", ready.user.name, shard[0], shard[1],);
-            let con = sqlite::create_connection(&*SQLITE_PATH);
-            sqlite::create_bot_table(&con);
-            sqlite::insert_timestamp(&con, shard[0] as i64, ready.user.name);
-            let _ = con.close().expect("Failed to close connection");
             if let Err(e) = DIESEL_PG.new_shard(shard[0] as i32) {
                 error!("{}", e);
             }
@@ -53,7 +42,6 @@ impl EventHandler for Handler {
                 error!("Failed creating new guild {}", e);
             };
         }
-        pg_backend::init_db();
         uptime::init(ctx);
     }
     fn resume(&self, _: Context, _: ResumedEvent) {

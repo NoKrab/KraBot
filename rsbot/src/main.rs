@@ -7,16 +7,12 @@ extern crate futures;
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
-extern crate rusqlite;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
 #[macro_use]
 extern crate serenity;
 extern crate eval;
-extern crate postgres;
-extern crate r2d2;
-extern crate r2d2_postgres;
 extern crate rand;
 extern crate regex;
 extern crate reqwest;
@@ -33,17 +29,14 @@ mod commands;
 mod config;
 mod database;
 mod framework;
-mod util;
 mod handler;
+mod util;
 
 use rsbot_lib::database::ConnectionPool;
-
-use database::postgres::postgres as pg_backend;
 use util::threads::uptime;
 
 use commands::voice::VoiceManager;
 use config::Config;
-use database::sqlite::sqlite;
 //use util::network;
 
 use std::collections::HashMap;
