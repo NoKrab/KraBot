@@ -48,7 +48,7 @@ impl ConnectionPool {
         return diesel::sql_query(r#"SELECT 1"#).execute(&conn).is_ok();
     }
 
-    pub fn new_guild(&self, guild_id: i64) -> Result<Guild, Error> {
+    pub fn new_guild(&self, guild_id: u64) -> Result<Guild, Error> {
         use schema::guilds;
         let new_guild_obj = NewGuild {
             id: guild_id as i64,
@@ -58,6 +58,25 @@ impl ConnectionPool {
         };
         let conn = self.connection();
         diesel::insert_into(guilds::table).values(&new_guild_obj).get_result::<Guild>(&conn)
+    }
+
+    pub fn get_guild(&self, guild_id: u64) -> Result<Guild, Error> {
+        use schema::guilds::dsl::*;
+        let conn = self.connection();
+
+        let guild = guilds.filter(id.eq(guild_id as i64)).first::<Guild>(&conn);
+
+        if let Err(e) = guild {
+            match e {
+                Error::NotFound => return self.new_guild(guild_id),
+                _ => {
+                    error!("Failed getting guild {}", e);
+                    return Err(e);
+                }
+            }
+        } else {
+            return guild;
+        }
     }
 
     pub fn update_guild(&self, guild: &Guild) {

@@ -9,7 +9,9 @@ use serde_json::Value;
 use std::error::Error;
 use std::sync::Mutex;
 // use util::network::request::request::SimpleRequest;
+use rsbot_lib::models::*;
 use CONFIG;
+use DIESEL_PG;
 
 use futures::Future;
 use reqwest::async::{Client, Response};
@@ -182,17 +184,17 @@ impl Album {
 // }
 
 pub fn set_album_id(album_id: &str, guild_id: i64) -> Result<()> {
-    pg_backend::execute_sql("UPDATE settings SET imgur_album_id = $1 WHERE guild_id = $2", &[&album_id, &guild_id])?;
+    let mut guild = DIESEL_PG.get_guild(guild_id as u64)?;
+    guild.imgur_album_id = Some(album_id.to_owned());
+    DIESEL_PG.update_guild(&guild);
     Ok(())
 }
 
 pub fn get_current_album_id(guild_id: i64) -> Result<String> {
-    let rows = pg_backend::query_sql("SELECT imgur_album_id FROM settings WHERE guild_id = $1", &[&guild_id])?;
-    let mut album_id: String = String::new();
-    for row in &rows {
-        let album_id_row: String = row.get(0);
-        debug!("Current Album: {}", album_id_row);
-        album_id = album_id_row;
+    let guild = DIESEL_PG.get_guild(guild_id as u64)?;
+    if let Some(s) = guild.imgur_album_id {
+        return Ok(s);
+    } else {
+        return Err(Box::from("No Album set"));
     }
-    Ok(album_id)
 }

@@ -49,7 +49,7 @@ impl EventHandler for Handler {
         debug!("Guilds in the Cache: {}", guilds);
         let guild_ids = get_guild_ids();
         for guild in guild_ids {
-            if let Err(e) = DIESEL_PG.new_guild(guild as i64) {
+            if let Err(e) = DIESEL_PG.new_guild(guild) {
                 error!("Failed creating new guild {}", e);
             };
         }
