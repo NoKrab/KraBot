@@ -13,6 +13,7 @@ use std::sync::Arc;
 use typemap::Key;
 use util::api::youtube::youtube::API;
 use CONFIG;
+
 pub struct VoiceManager;
 
 impl Key for VoiceManager {
@@ -76,14 +77,24 @@ command!(deafen(ctx, msg) {
 });
 
 command!(join(ctx, msg, args) {
-    let guild_id = match CACHE.read().guild_channel(msg.channel_id) {
-        Some(channel) => channel.read().guild_id,
+    let guild = match msg.guild() {
+        Some(guild) => guild,
         None => {
             check_msg(msg.channel_id.say("Groups and DMs not supported"));
-
             return Ok(());
-        },
+        }
     };
+    // let guild_id = match CACHE.read().guild_channel(msg.channel_id) {
+    //     Some(channel) => channel.read().guild_id,
+    //     None => {
+    //         check_msg(msg.channel_id.say("Groups and DMs not supported"));
+
+    //         return Ok(());
+    //     },
+    // };
+    debug!("{:?}", guild);
+
+    let guild_id = guild.read().id;
     info!("{}", guild_id);
 
     //Gets HashMap from all Users in the current guild which are in a Voice Channel: (UserID ->VoiceState)
@@ -98,7 +109,7 @@ command!(join(ctx, msg, args) {
 
         },
     };
-     info!("User in Voice: {:#?}", voice_members);
+    info!("User in Voice: {:#?}", voice_members);
 
     //If User is in Voice join VoiceChannel...
     if voice_members.contains_key(&msg.author.id) {             //Searches for Key (UserId) in HashMap
@@ -196,8 +207,15 @@ command!(mute(ctx, msg) {
 });
 
 command!(play(ctx, msg, args) {
-    let args = args.full();
-    if RE_PLAY.is_match(&args) {
+    let query = match args.single::<String>(){
+        Ok(query) => query,
+        Err(_) => {
+            check_msg(msg.channel_id.say("Must provide a URL to a video or audio"));
+            return Ok(())
+        }
+    };
+    // let args = args.full();
+    if RE_PLAY.is_match(&query) {
         let url = get_url(&args, &msg.author.id);
 
         let guild_id = match CACHE.read().guild_channel(msg.channel_id) {
@@ -208,7 +226,7 @@ command!(play(ctx, msg, args) {
                 return Ok(());
             },
         };
-        let mut manager_lock = ctx.data.lock().get::<VoiceManager>().cloned().unwrap();
+        let mut manager_lock = ctx.data.lock().get::<VoiceManager>().cloned().expect("Expected VoiceManager in ShareMap.");
         let mut manager = manager_lock.lock();
 
         if let Some(handler) = manager.get_mut(guild_id) {
@@ -223,16 +241,13 @@ command!(play(ctx, msg, args) {
                 },
             };
             handler.play(source);
-             let response = format!(
-                    "Playing: {}",
-                    url
-                );
+            let response = format!("Playing: {}", url);
             check_msg(msg.channel_id.say(&response));
         } else {
             check_msg(msg.channel_id.say("Not in a voice channel to play in"));
         }
-    } else if !args.is_empty() {
-        let query = str::replace(args, " ", "+");
+    } else if !query.is_empty() {
+        let query = str::replace(&query, " ", "+");
         debug!("Query: {}", query);
         API::youtube_search(query, msg);
     } else {
