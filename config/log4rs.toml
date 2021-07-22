@@ -35,11 +35,8 @@ level = "warn"
 [loggers.rustls]
 level = "warn"
 
-# [loggers.twilight_http]
-# level = "warn"
-
-# [loggers.tungstenite]
-# level = "warn"
+[loggers.tungstenite]
+level = "warn"
 
 [loggers.twilight_gateway]
 level = "warn"

@@ -16,7 +16,6 @@ async fn main() {
         }
     }
     log4rs::init_file("./config/log4rs.toml", Default::default()).unwrap();
-    info!("Hello");
     print_2b();
     dotenv().ok();
     match start().await {
