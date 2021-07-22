@@ -4,8 +4,7 @@ use hyper::{
     client::{Client as HyperClient, HttpConnector},
     Body, Request,
 };
-use std::net::SocketAddr;
-use std::str::FromStr;
+use std::net::{SocketAddr, ToSocketAddrs};
 use std::{error::Error, future::Future};
 use twilight_cache_inmemory::{InMemoryCache, ResourceType};
 use twilight_command_parser::{Command, CommandParserConfig, Parser};
@@ -44,7 +43,9 @@ fn spawn(
 
 pub async fn start() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     let (lhost, lauth) = get_lavalink_env();
-    let lavalink_host = SocketAddr::from_str(&lhost)?;
+    let vlhost: Vec<SocketAddr> = lhost.to_socket_addrs()?.collect();
+    debug!("{:#?}", vlhost);
+    let lavalink_host = vlhost[0];
     let scheme = ShardScheme::Auto;
     let (cluster, mut events) = Cluster::builder(
         get_discord_token(),
