@@ -1,0 +1,15 @@
+version: '3.9'
+services:
+    lavalink:
+        image: fredboat/lavalink:master
+        init: true
+        environment:
+            LAVALINK_SERVER_PASSWORD: youshallnotpass
+            SERVER_PORT: 2333
+            SERVER_HOST: 0.0.0.0
+    rsbot:
+        image: bitsfitr/rsbot:latest
+        env_file: 
+            - ./.env.docker
+        depends_on: 
+            - lavalink

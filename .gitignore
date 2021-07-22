@@ -78,3 +78,4 @@ db/
 *.fmt
 Cargo.lock
 .env
+.env.docker
