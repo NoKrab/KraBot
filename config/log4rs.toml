@@ -1,0 +1,45 @@
+refresh_rate = "30 seconds"
+
+[appenders.console]
+kind = "console"
+
+[appenders.console.encoder]
+pattern = "{d(%Y-%m-%d %H:%M:%S)} [{t}]:{T}:{L} {h({l})} {M}:{m}{n}"
+
+[[appenders.console.filters]]
+kind = "threshold"
+level = "debug"
+
+[appenders.file]
+kind = "file"
+path = "logs/rsbot.log"
+
+[appenders.file.encoder]
+pattern = "{d} [{t}]:{T}:{L} {l} {M}:{m}{n}"
+
+[[appenders.file.filters]]
+kind = "threshold"
+level = "info"
+
+[root]
+level = "trace"
+appenders = ["console", "file"]
+
+[loggers]
+[loggers.h2]
+level = "warn"
+
+[loggers.hyper]
+level = "warn"
+
+[loggers.rustls]
+level = "warn"
+
+# [loggers.twilight_http]
+# level = "warn"
+
+# [loggers.tungstenite]
+# level = "warn"
+
+[loggers.twilight_gateway]
+level = "warn"

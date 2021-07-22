@@ -1,0 +1,19 @@
+[package]
+name = "lib"
+version = "0.1.0"
+edition = "2018"
+publish = false
+
+[dependencies]
+log = "0.4"
+hyper = { features = ["client", "http2", "runtime"], version = "0.14" }
+futures = "0.3"
+serde_json = { version = "1" }
+tokio = { features = ["macros", "rt-multi-thread", "sync"], version = "1" }
+twilight-gateway = "0.5"
+twilight-http = "0.5"
+twilight-model = "0.5"
+twilight-standby = "0.5"
+twilight-cache-inmemory = "0.5"
+twilight-lavalink = "0.5"
+twilight-command-parser = "0.5"

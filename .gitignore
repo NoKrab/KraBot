@@ -71,10 +71,10 @@ modules.xml
 /target/
 **/*.rs.bk
 .idea/vcs.xml
-config/config.toml
 .vscode/
-log/
+logs/
 \.idea/
 db/
 *.fmt
 Cargo.lock
+.env
