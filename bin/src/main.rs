@@ -19,8 +19,6 @@ async fn main() {
     info!("Hello");
     print_2b();
     dotenv().ok();
-    // print_all_env();
-    // info!("{}", get_discord_token());
     match start().await {
         Ok(_) => (),
         Err(e) => error!("{:#?}", e),
