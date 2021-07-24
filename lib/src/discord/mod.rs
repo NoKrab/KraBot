@@ -1,445 +1,322 @@
 use super::env::{get_bot_prefix, get_discord_token, get_lavalink_env};
-use futures::stream::StreamExt;
-use hyper::{
-    client::{Client as HyperClient, HttpConnector},
-    Body, Request,
-};
-use std::net::{SocketAddr, ToSocketAddrs};
-use std::{error::Error, future::Future};
-use twilight_cache_inmemory::{InMemoryCache, ResourceType};
-use twilight_command_parser::{Command, CommandParserConfig, Parser};
-use twilight_gateway::{
-    cluster::{Cluster, ShardScheme},
-    Event,
-};
-use twilight_http::Client as HttpClient;
-use twilight_lavalink::{
-    http::LoadedTracks,
-    model::{Destroy, Pause, Play, Seek, Stop, Volume},
-    Lavalink,
-};
-use twilight_model::gateway::Intents;
-use twilight_model::{channel::Message, gateway::payload::MessageCreate, id::ChannelId};
-use twilight_standby::Standby;
 
-#[derive(Clone, Debug)]
-struct State {
-    http: HttpClient,
-    lavalink: Lavalink,
-    hyper: HyperClient<HttpConnector>,
-    standby: Standby,
-    cluster: Cluster,
+use serenity::{
+    async_trait,
+    client::{Client, Context, EventHandler},
+    framework::{
+        standard::{
+            macros::{command, group, hook},
+            Args, CommandResult,
+        },
+        StandardFramework,
+    },
+    http::Http,
+    model::{channel::Message, gateway::Ready, id::GuildId, misc::Mentionable},
+    Result as SerenityResult,
+};
+
+use lavalink_rs::{gateway::*, model::*, LavalinkClient};
+use serenity::prelude::*;
+use songbird::SerenityInit;
+
+struct Lavalink;
+
+impl TypeMapKey for Lavalink {
+    type Value = LavalinkClient;
 }
 
-fn spawn(
-    fut: impl Future<Output = Result<(), Box<dyn Error + Send + Sync + 'static>>> + Send + 'static,
-) {
-    tokio::spawn(async move {
-        if let Err(why) = fut.await {
-            debug!("handler error: {:?}", why);
-        }
-    });
+struct Handler;
+struct LavalinkHandler;
+
+#[async_trait]
+impl EventHandler for Handler {
+    async fn ready(&self, _: Context, ready: Ready) {
+        info!("{} is connected!", ready.user.name);
+    }
+
+    async fn cache_ready(&self, _: Context, guilds: Vec<GuildId>) {
+        info!("cache is ready!\n{:#?}", guilds);
+    }
 }
 
-pub async fn start() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-    let (lhost, lauth) = get_lavalink_env();
-    let vlhost: Vec<SocketAddr> = lhost.to_socket_addrs()?.collect();
-    debug!("{:#?}", vlhost);
-    let lavalink_host = vlhost[0];
-    let scheme = ShardScheme::Auto;
-    let (cluster, mut events) = Cluster::builder(
-        get_discord_token(),
-        Intents::GUILD_MESSAGES | Intents::GUILD_VOICE_STATES,
-    )
-    .shard_scheme(scheme)
-    .build()
-    .await?;
-    let cluster_spawn = cluster.clone();
+#[async_trait]
+impl LavalinkEventHandler for LavalinkHandler {
+    async fn track_start(&self, _client: LavalinkClient, event: TrackStart) {
+        info!("Track started!\nGuild: {}", event.guild_id);
+    }
+    async fn track_finish(&self, _client: LavalinkClient, event: TrackFinish) {
+        info!("Track finished!\nGuild: {}", event.guild_id);
+    }
+}
 
-    tokio::spawn(async move {
-        cluster_spawn.up().await;
-    });
+#[hook]
+async fn after(_ctx: &Context, _msg: &Message, command_name: &str, command_result: CommandResult) {
+    match command_result {
+        Err(why) => println!(
+            "Command '{}' returned error {:?} => {}",
+            command_name, why, why
+        ),
+        _ => (),
+    }
+}
 
-    let http = HttpClient::new(get_discord_token());
-    let user_id = http.current_user().await?.id;
-    let lavalink = Lavalink::new(user_id, cluster.shards().len() as u64);
-    lavalink.add(lavalink_host, lauth).await?;
-    let cache = InMemoryCache::builder()
-        .resource_types(ResourceType::MESSAGE)
-        .build();
-    let state = State {
-        http: http.clone(),
-        lavalink,
-        hyper: HyperClient::new(),
-        standby: Standby::new(),
-        cluster: cluster.clone(),
+#[group]
+#[only_in(guilds)]
+#[commands(join, leave, play, now_playing, skip, ping)]
+struct General;
+
+pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
+    let token = get_discord_token();
+
+    let http = Http::new_with_token(&token);
+
+    let bot_id = match http.get_current_application_info().await {
+        Ok(info) => info.id,
+        Err(why) => panic!("Could not access application info: {:?}", why),
     };
 
-    while let Some((shard_id, event)) = events.next().await {
-        cache.update(&event);
-        state.standby.process(&event);
-        state.lavalink.process(&event).await?;
-        tokio::spawn(handle_event(shard_id, event, state.clone()));
+    let framework = StandardFramework::new()
+        .configure(|c| c.prefix(&get_bot_prefix()))
+        .after(after)
+        .group(&GENERAL_GROUP);
+
+    let mut client = Client::builder(&token)
+        .event_handler(Handler)
+        .framework(framework)
+        .register_songbird()
+        .await
+        .expect("Err creating client");
+
+    let (host, port,auth) = get_lavalink_env();
+    let lava_client = LavalinkClient::builder(bot_id)
+        .set_host(host)
+        .set_port(port)
+        .set_password(auth)
+        .build(LavalinkHandler)
+        .await?;
+
+    {
+        let mut data = client.data.write().await;
+        data.insert::<Lavalink>(lava_client);
+    }
+
+    let _ = client
+        .start()
+        .await
+        .map_err(|why| error!("Client ended: {:?}", why));
+
+    Ok(())
+}
+
+#[command]
+async fn join(ctx: &Context, msg: &Message) -> CommandResult {
+    let guild = msg.guild(&ctx.cache).await.unwrap();
+    let guild_id = guild.id;
+
+    let channel_id = guild
+        .voice_states
+        .get(&msg.author.id)
+        .and_then(|voice_state| voice_state.channel_id);
+
+    let connect_to = match channel_id {
+        Some(channel) => channel,
+        None => {
+            check_msg(msg.reply(ctx, "Join a voice channel.").await);
+
+            return Ok(());
+        }
+    };
+
+    let manager = songbird::get(ctx).await.unwrap().clone();
+
+    let (_, handler) = manager.join_gateway(guild_id, connect_to).await;
+
+    match handler {
+        Ok(connection_info) => {
+            let data = ctx.data.read().await;
+            let lava_client = data.get::<Lavalink>().unwrap().clone();
+            lava_client.create_session(&connection_info).await?;
+
+            check_msg(
+                msg.channel_id
+                    .say(&ctx.http, &format!("Joined {}", connect_to.mention()))
+                    .await,
+            );
+        }
+        Err(why) => check_msg(
+            msg.channel_id
+                .say(&ctx.http, format!("Error joining the channel: {}", why))
+                .await,
+        ),
     }
 
     Ok(())
 }
 
-async fn handle_event(
-    shard_id: u64,
-    event: Event,
-    state: State,
-) -> Result<(), Box<dyn Error + Send + Sync>> {
-    match event {
-        Event::MessageCreate(msg) => {
-            let parser = setup_parser();
-            match parser.parse(&msg.content) {
-                Some(Command { name: "ping", .. }) => spawn(ping(msg.0, shard_id, state)),
-                Some(Command { name: "join", .. }) => spawn(join(msg.0, shard_id, state)),
-                Some(Command { name: "leave", .. }) => spawn(leave(msg.0, shard_id, state)),
-                Some(Command { name: "play", .. }) => spawn(play(msg.0, state)),
-                Some(Command { name: "pause", .. }) => spawn(pause(msg.0, state)),
-                Some(Command { name: "seek", .. }) => spawn(seek(msg.0, state)),
-                Some(Command { name: "stop", .. }) => spawn(stop(msg.0, state)),
-                Some(Command { name: "volume", .. }) => spawn(volume(msg.0, state)),
-                _ => trace!("Message didn't match a prefix and command"),
-            }
+#[command]
+async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
+    let guild = msg.guild(&ctx.cache).await.unwrap();
+    let guild_id = guild.id;
+
+    let manager = songbird::get(ctx).await.unwrap().clone();
+    let has_handler = manager.get(guild_id).is_some();
+
+    if has_handler {
+        if let Err(e) = manager.remove(guild_id).await {
+            check_msg(
+                msg.channel_id
+                    .say(&ctx.http, format!("Failed: {:?}", e))
+                    .await,
+            );
         }
-        Event::ShardConnected(_) => {
-            info!("Connected on shard {}", shard_id);
+
+        {
+            let data = ctx.data.read().await;
+            let lava_client = data.get::<Lavalink>().unwrap().clone();
+            lava_client.destroy(guild_id).await?;
         }
-        _ => {}
-    }
 
-    Ok(())
-}
-
-fn setup_parser<'a>() -> Parser<'a> {
-    let mut config = CommandParserConfig::new();
-    config.add_command("ping", false);
-    config.add_command("join", false);
-    config.add_command("leave", false);
-    config.add_command("play", false);
-    config.add_command("pause", false);
-    config.add_command("seek", false);
-    config.add_command("stop", false);
-    config.add_command("volume", false);
-    config.add_prefix(get_bot_prefix());
-    Parser::new(config)
-}
-
-async fn ping(
-    msg: Message,
-    shard_id: u64,
-    state: State,
-) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-    info!("Shard ID: {}", shard_id);
-    state
-        .http
-        .create_message(msg.channel_id)
-        .content("Pong!")?
-        .await?;
-    Ok(())
-}
-
-async fn join(
-    msg: Message,
-    shard_id: u64,
-    state: State,
-) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-    state
-        .http
-        .create_message(msg.channel_id)
-        .content("What's the channel ID you want me to join?")?
-        .await?;
-
-    let author_id = msg.author.id;
-    let msg = state
-        .standby
-        .wait_for_message(msg.channel_id, move |new_msg: &MessageCreate| {
-            new_msg.author.id == author_id
-        })
-        .await?;
-    let channel_id = msg.content.parse::<u64>()?;
-
-    if let Some(shard) = state.cluster.shard(shard_id) {
-        shard
-            .command(&serde_json::json!({
-                "op": 4,
-                "d": {
-                    "channel_id": channel_id,
-                    "guild_id": msg.guild_id,
-                    "self_mute": false,
-                    "self_deaf": false,
-                }
-            }))
-            .await?;
-
-        state
-            .http
-            .create_message(msg.channel_id)
-            .content(format!("Joined <#{}>!", channel_id))?
-            .await?;
+        check_msg(msg.channel_id.say(&ctx.http, "Left voice channel").await);
     } else {
-        state
-            .http
-            .create_message(msg.channel_id)
-            .content("Failed joining channel")?
-            .await?;
+        check_msg(msg.reply(ctx, "Not in a voice channel").await);
     }
 
     Ok(())
 }
 
-async fn leave(
-    msg: Message,
-    shard_id: u64,
-    state: State,
-) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-    debug!(
-        "leave command in channel {} by {}",
-        msg.channel_id, msg.author.name
-    );
-
-    let guild_id = msg.guild_id.unwrap();
-    let player = state.lavalink.player(guild_id).await.unwrap();
-    player.send(Destroy::from(guild_id))?;
-    if let Some(shard) = state.cluster.shard(shard_id) {
-        shard
-            .command(&serde_json::json!({
-                "op": 4,
-                "d": {
-                    "channel_id": None::<ChannelId>,
-                    "guild_id": msg.guild_id,
-                    "self_mute": false,
-                    "self_deaf": false,
-                }
-            }))
-            .await?;
-    }
-    state
-        .http
-        .create_message(msg.channel_id)
-        .content("Left the channel")?
-        .await?;
+#[command]
+async fn ping(context: &Context, msg: &Message) -> CommandResult {
+    check_msg(msg.channel_id.say(&context.http, "Pong!").await);
 
     Ok(())
 }
 
-async fn play(msg: Message, state: State) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-    debug!(
-        "play command in channel {} by {}",
-        msg.channel_id, msg.author.name
-    );
-    debug!("{}", msg.content);
-    let msg_split: Vec<&str> = msg.content.split(' ').collect();
-    if msg_split.len() == 1 {
-        state
-            .http
-            .create_message(msg.channel_id)
-            .content("What's the URL of the audio to play?")?
-            .await?;
+#[command]
+#[min_args(1)]
+async fn play(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
+    let query = args.message().to_string();
 
-        let author_id = msg.author.id;
-        let msg = state
-            .standby
-            .wait_for_message(msg.channel_id, move |new_msg: &MessageCreate| {
-                new_msg.author.id == author_id
-            })
-            .await?;
-        let guild_id = msg.guild_id.unwrap();
-
-        let player = state.lavalink.player(guild_id).await.unwrap();
-        let (parts, body) = twilight_lavalink::http::load_track(
-            player.node().config().address,
-            &msg.content,
-            &player.node().config().authorization,
-        )?
-        .into_parts();
-        let req = Request::from_parts(parts, Body::from(body));
-        let res = state.hyper.request(req).await?;
-        let response_bytes = hyper::body::to_bytes(res.into_body()).await?;
-
-        let loaded = serde_json::from_slice::<LoadedTracks>(&response_bytes)?;
-
-        if let Some(track) = loaded.tracks.first() {
-            player.send(Play::from((guild_id, &track.track)))?;
-
-            let content = format!(
-                "Playing **{:?}** by **{:?}**",
-                track.info.title, track.info.author
+    let guild_id = match ctx.cache.guild_channel(msg.channel_id).await {
+        Some(channel) => channel.guild_id,
+        None => {
+            check_msg(
+                msg.channel_id
+                    .say(&ctx.http, "Error finding channel info")
+                    .await,
             );
-            state
-                .http
-                .create_message(msg.channel_id)
-                .content(content)?
-                .await?;
-        } else {
-            state
-                .http
-                .create_message(msg.channel_id)
-                .content("Didn't find any results")?
-                .await?;
+
+            return Ok(());
         }
-    } else if msg_split.len() == 2 {
-        let guild_id = msg.guild_id.unwrap();
+    };
 
-        let player = state.lavalink.player(guild_id).await.unwrap();
-        let (parts, body) = twilight_lavalink::http::load_track(
-            player.node().config().address,
-            &msg_split[1],
-            &player.node().config().authorization,
-        )?
-        .into_parts();
-        let req = Request::from_parts(parts, Body::from(body));
-        let res = state.hyper.request(req).await?;
-        let response_bytes = hyper::body::to_bytes(res.into_body()).await?;
+    let manager = songbird::get(ctx).await.unwrap().clone();
 
-        let loaded = serde_json::from_slice::<LoadedTracks>(&response_bytes)?;
+    if let Some(_handler) = manager.get(guild_id) {
+        let data = ctx.data.read().await;
+        let lava_client = data.get::<Lavalink>().unwrap().clone();
 
-        if let Some(track) = loaded.tracks.first() {
-            player.send(Play::from((guild_id, &track.track)))?;
+        let query_information = lava_client.auto_search_tracks(&query).await?;
 
-            let content = format!(
-                "Playing **{:?}** by **{:?}**",
-                track.info.title, track.info.author
+        if query_information.tracks.is_empty() {
+            check_msg(
+                msg.channel_id
+                    .say(&ctx, "Could not find any video of the search query.")
+                    .await,
             );
-            state
-                .http
-                .create_message(msg.channel_id)
-                .content(content)?
-                .await?;
+            return Ok(());
+        }
+
+        if let Err(why) = &lava_client
+            .play(guild_id, query_information.tracks[0].clone())
+            // Change this to play() if you want your own custom queue or no queue at all.
+            .queue()
+            .await
+        {
+            eprintln!("{}", why);
+            return Ok(());
+        };
+        check_msg(
+            msg.channel_id
+                .say(
+                    &ctx.http,
+                    format!(
+                        "Added to queue: {}",
+                        query_information.tracks[0].info.as_ref().unwrap().title
+                    ),
+                )
+                .await,
+        );
+    } else {
+        check_msg(
+            msg.channel_id
+                .say(
+                    &ctx.http,
+                    "Use `~join` first, to connect the bot to your current voice channel.",
+                )
+                .await,
+        );
+    }
+
+    Ok(())
+}
+
+#[command]
+#[aliases(np)]
+async fn now_playing(ctx: &Context, msg: &Message) -> CommandResult {
+    let data = ctx.data.read().await;
+    let lava_client = data.get::<Lavalink>().unwrap().clone();
+
+    if let Some(node) = lava_client.nodes().await.get(&msg.guild_id.unwrap().0) {
+        if let Some(track) = &node.now_playing {
+            check_msg(
+                msg.channel_id
+                    .say(
+                        &ctx.http,
+                        format!("Now Playing: {}", track.track.info.as_ref().unwrap().title),
+                    )
+                    .await,
+            );
         } else {
-            state
-                .http
-                .create_message(msg.channel_id)
-                .content("Didn't find any results")?
-                .await?;
+            check_msg(
+                msg.channel_id
+                    .say(&ctx.http, "Nothing is playing at the moment.")
+                    .await,
+            );
         }
     } else {
-        state
-            .http
-            .create_message(msg.channel_id)
-            .content("Too many args!")?
-            .await?;
+        check_msg(
+            msg.channel_id
+                .say(&ctx.http, "Nothing is playing at the moment.")
+                .await,
+        );
     }
 
     Ok(())
 }
 
-async fn pause(msg: Message, state: State) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-    debug!(
-        "pause command in channel {} by {}",
-        msg.channel_id, msg.author.name
-    );
+#[command]
+async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
+    let data = ctx.data.read().await;
+    let lava_client = data.get::<Lavalink>().unwrap().clone();
 
-    let guild_id = msg.guild_id.unwrap();
-    let player = state.lavalink.player(guild_id).await.unwrap();
-    let paused = player.paused();
-    player.send(Pause::from((guild_id, !paused)))?;
-
-    let action = if paused { "Unpaused " } else { "Paused" };
-
-    state
-        .http
-        .create_message(msg.channel_id)
-        .content(format!("{} the track", action))?
-        .await?;
-
-    Ok(())
-}
-
-async fn seek(msg: Message, state: State) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-    debug!(
-        "seek command in channel {} by {}",
-        msg.channel_id, msg.author.name
-    );
-    state
-        .http
-        .create_message(msg.channel_id)
-        .content("Where in the track do you want to seek to (in seconds)?")?
-        .await?;
-
-    let author_id = msg.author.id;
-    let msg = state
-        .standby
-        .wait_for_message(msg.channel_id, move |new_msg: &MessageCreate| {
-            new_msg.author.id == author_id
-        })
-        .await?;
-    let guild_id = msg.guild_id.unwrap();
-    let position = msg.content.parse::<i64>()?;
-
-    let player = state.lavalink.player(guild_id).await.unwrap();
-    player.send(Seek::from((guild_id, position * 1000)))?;
-
-    state
-        .http
-        .create_message(msg.channel_id)
-        .content(format!("Seeked to {}s", position))?
-        .await?;
-
-    Ok(())
-}
-
-async fn stop(msg: Message, state: State) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-    debug!(
-        "stop command in channel {} by {}",
-        msg.channel_id, msg.author.name
-    );
-
-    let guild_id = msg.guild_id.unwrap();
-    let player = state.lavalink.player(guild_id).await.unwrap();
-    player.send(Stop::from(guild_id))?;
-
-    state
-        .http
-        .create_message(msg.channel_id)
-        .content("Stopped the track")?
-        .await?;
-
-    Ok(())
-}
-
-async fn volume(msg: Message, state: State) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-    debug!(
-        "volume command in channel {} by {}",
-        msg.channel_id, msg.author.name
-    );
-    state
-        .http
-        .create_message(msg.channel_id)
-        .content("What's the volume you want to set (0-1000, 100 being the default)?")?
-        .await?;
-
-    let author_id = msg.author.id;
-    let msg = state
-        .standby
-        .wait_for_message(msg.channel_id, move |new_msg: &MessageCreate| {
-            new_msg.author.id == author_id
-        })
-        .await?;
-    let guild_id = msg.guild_id.unwrap();
-    let volume = msg.content.parse::<i64>()?;
-
-    if !(0..=1000).contains(&volume) {
-        state
-            .http
-            .create_message(msg.channel_id)
-            .content("That's more than 1000")?
-            .await?;
-
-        return Ok(());
+    if let Some(track) = lava_client.skip(msg.guild_id.unwrap()).await {
+        check_msg(
+            msg.channel_id
+                .say(
+                    ctx,
+                    format!("Skipped: {}", track.track.info.as_ref().unwrap().title),
+                )
+                .await,
+        );
+    } else {
+        check_msg(msg.channel_id.say(ctx, "Nothing to skip.").await);
     }
 
-    let player = state.lavalink.player(guild_id).await.unwrap();
-    player.send(Volume::from((guild_id, volume)))?;
-
-    state
-        .http
-        .create_message(msg.channel_id)
-        .content(format!("Set the volume to {}", volume))?
-        .await?;
-
     Ok(())
+}
+
+fn check_msg(result: SerenityResult<Message>) {
+    if let Err(why) = result {
+        println!("Error sending message: {:?}", why);
+    }
 }

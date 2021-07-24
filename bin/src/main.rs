@@ -18,10 +18,11 @@ async fn main() {
     log4rs::init_file("./config/log4rs.toml", Default::default()).unwrap();
     print_2b();
     dotenv().ok();
-    match start().await {
-        Ok(_) => (),
-        Err(e) => error!("{:#?}", e),
-    }
+    // match start().await {
+    //     Ok(_) => (),
+    //     Err(e) => error!("{:#?}", e),
+    // }
+    start().await;
 }
 
 fn create_log_folder() -> std::io::Result<()> {
