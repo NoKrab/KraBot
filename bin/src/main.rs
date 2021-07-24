@@ -18,11 +18,9 @@ async fn main() {
     log4rs::init_file("./config/log4rs.toml", Default::default()).unwrap();
     print_2b();
     dotenv().ok();
-    // match start().await {
-    //     Ok(_) => (),
-    //     Err(e) => error!("{:#?}", e),
-    // }
-    start().await;
+    if let Err(e) = start().await {
+        error!("{}", e)
+    }
 }
 
 fn create_log_folder() -> std::io::Result<()> {

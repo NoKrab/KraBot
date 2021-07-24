@@ -51,12 +51,8 @@ impl LavalinkEventHandler for LavalinkHandler {
 
 #[hook]
 async fn after(_ctx: &Context, _msg: &Message, command_name: &str, command_result: CommandResult) {
-    match command_result {
-        Err(why) => println!(
-            "Command '{}' returned error {:?} => {}",
-            command_name, why, why
-        ),
-        _ => (),
+    if let Err(e) = command_result {
+        error!("Command '{}' returned error {:?} => {}", command_name, e, e)
     }
 }
 
@@ -87,7 +83,7 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .expect("Err creating client");
 
-    let (host, port,auth) = get_lavalink_env();
+    let (host, port, auth) = get_lavalink_env();
     let lava_client = LavalinkClient::builder(bot_id)
         .set_host(host)
         .set_port(port)
@@ -232,7 +228,7 @@ async fn play(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
             .queue()
             .await
         {
-            eprintln!("{}", why);
+            error!("{}", why);
             return Ok(());
         };
         check_msg(
@@ -317,6 +313,6 @@ async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
 
 fn check_msg(result: SerenityResult<Message>) {
     if let Err(why) = result {
-        println!("Error sending message: {:?}", why);
+        error!("Error sending message: {:?}", why);
     }
 }
