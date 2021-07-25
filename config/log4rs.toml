@@ -27,16 +27,25 @@ appenders = ["console", "file"]
 
 [loggers]
 [loggers.h2]
-level = "warn"
+level = "error"
 
 [loggers.hyper]
-level = "warn"
+level = "error"
+
+[loggers.reqwest]
+level = "error"
+
+[loggers.tracing]
+level = "error"
+
+[loggers.serenity]
+level = "error"
 
 [loggers.rustls]
-level = "warn"
+level = "error"
 
 [loggers.tungstenite]
-level = "warn"
+level = "error"
 
-[loggers.twilight_gateway]
-level = "warn"
+[loggers.lavalink_rs]
+level = "error"
