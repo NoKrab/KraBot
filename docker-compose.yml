@@ -2,6 +2,7 @@ version: '3.9'
 services:
     lavalink:
         image: fredboat/lavalink:master
+        restart: always
         init: true
         environment:
             LAVALINK_SERVER_PASSWORD: youshallnotpass
@@ -9,6 +10,7 @@ services:
             SERVER_HOST: 0.0.0.0
     rsbot:
         image: bitsfitr/rsbot:latest
+        restart: always
         env_file: 
             - ./.env.docker
         depends_on: 

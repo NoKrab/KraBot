@@ -3,7 +3,7 @@ WORKDIR /build
 COPY . .
 RUN cargo build --release
 
-FROM rust:slim
+FROM debian:stable-slim
 WORKDIR /app
 COPY --from=build /build/target/release/bin .
 COPY --from=build /build/config/ config
