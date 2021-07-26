@@ -1,3 +1,6 @@
+use core::panic;
+use std::time::Duration;
+
 use super::env::{get_bot_prefix, get_discord_token, get_lavalink_env};
 
 use serenity::{
@@ -18,6 +21,7 @@ use serenity::{
 use lavalink_rs::{gateway::*, model::*, LavalinkClient};
 use serenity::prelude::*;
 use songbird::SerenityInit;
+use tokio::time::sleep;
 
 struct Lavalink;
 
@@ -84,12 +88,29 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Err creating client");
 
     let (host, port, auth) = get_lavalink_env();
-    let lava_client = LavalinkClient::builder(bot_id)
-        .set_host(host)
-        .set_port(port)
-        .set_password(auth)
-        .build(LavalinkHandler)
-        .await?;
+
+    let mut remaining_attempts = 20;
+    let lava_client = loop {
+        if let Ok(client) = LavalinkClient::builder(bot_id)
+            .set_host(&host)
+            .set_port(port)
+            .set_password(&auth)
+            .build(LavalinkHandler)
+            .await
+        {
+            info!("Connected to LavaLink Server");
+            break client;
+        }
+
+        sleep(Duration::from_millis(2000)).await;
+
+        remaining_attempts -= 1;
+
+        if remaining_attempts < 0 {
+            error!("Could not connect to LavaLink Server. Is it running?");
+            std::process::exit(0);
+        }
+    };
 
     {
         let mut data = client.data.write().await;
