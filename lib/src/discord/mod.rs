@@ -102,14 +102,15 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
             break client;
         }
 
-        sleep(Duration::from_millis(2000)).await;
-
         remaining_attempts -= 1;
 
         if remaining_attempts < 0 {
             error!("Could not connect to LavaLink Server. Is it running?");
             std::process::exit(0);
         }
+
+        // Give LavaLink some time to boot...
+        sleep(Duration::from_millis(2000)).await;
     };
 
     {
