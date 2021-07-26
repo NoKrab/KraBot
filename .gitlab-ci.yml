@@ -8,4 +8,6 @@ build_image:
     - docker:dind
   script:
     - docker version
-    - docker build -t bitsfitr/rsbot:latest .
+    - DOCKER_BUILDKIT=1 docker build -t bitsfitr/rsbot:latest .
+    - docker login -u bitsfitr -p $CI_BUILD_TOKEN $CI_REGISTRY
+    - docker push bitsfitr/rsbot:latest
