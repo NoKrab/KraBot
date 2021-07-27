@@ -14,6 +14,7 @@ serenity = { version = "0.10", default-features = false, features = [
     "rustls_backend",
     "model",
     "standard_framework",
+    "collector",
 ] }
 tokio = { version = "1.0", features = ["full"] }
 lavalink-rs = { version = "*", features = ["rustls", "serenity"] }
