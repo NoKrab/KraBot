@@ -8,7 +8,7 @@ build_image:
     - docker:dind
   script:
     - docker version
-    - DOCKER_BUILDKIT=1 docker build --progress=plain -t bitsfitr/$CI_PROJECT_NAME:latest -t bitsfitr/$CI_PROJECT_NAME:$CI_COMMIT_REF_NAME.
+    - DOCKER_BUILDKIT=1 docker build --progress=plain -t bitsfitr/"$CI_PROJECT_NAME":latest -t bitsfitr/"$CI_PROJECT_NAME":"$CI_COMMIT_REF_NAME".
     - docker login -u bitsfitr -p $CI_BUILD_TOKEN $CI_REGISTRY
-    - docker push --all-tags bitsfitr/$CI_PROJECT_NAME
+    - docker push --all-tags bitsfitr/"$CI_PROJECT_NAME"
     - docker logout
