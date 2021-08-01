@@ -135,6 +135,25 @@ async fn play(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
                 )
                 .await,
         );
+        if let Some(track_info) = &tracks[track_idx].info {
+            let queue_len = lava_client
+                .nodes()
+                .await
+                .get(&msg.guild_id.unwrap().0)
+                .unwrap()
+                .queue
+                .len();
+
+            check_msg(
+                msg.channel_id
+                    .send_message(&ctx.http, |m| {
+                        m.content("Added to queue");
+                        m.embed(|e| super::yt_embed(e, track_info, queue_len));
+                        m
+                    })
+                    .await,
+            );
+        }
     } else {
         check_msg(
             msg.channel_id
