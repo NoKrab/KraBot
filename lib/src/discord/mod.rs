@@ -1,6 +1,17 @@
 use core::panic;
 use std::time::Duration;
 
+mod commands;
+
+use commands::audio::join::*;
+use commands::audio::leave::*;
+use commands::audio::now_playing::*;
+use commands::audio::play::*;
+use commands::audio::queue::*;
+use commands::audio::skip::*;
+
+use commands::general::ping::*;
+
 use super::env::{get_bot_prefix, get_discord_token, get_lavalink_env};
 
 use serenity::{
@@ -8,18 +19,13 @@ use serenity::{
     client::{Client, Context, EventHandler},
     framework::{
         standard::{
-            macros::{check, command, group, hook},
-            Args, CommandResult,
+            macros::{group, hook},
+            CommandResult,
         },
         StandardFramework,
     },
     http::Http,
-    model::{
-        channel::{Message, ReactionType},
-        gateway::Ready,
-        id::{EmojiId, GuildId},
-        misc::Mentionable,
-    },
+    model::{channel::Message, gateway::Ready, id::GuildId},
     Result as SerenityResult,
 };
 
@@ -128,326 +134,6 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .map_err(|why| error!("Client ended: {:?}", why));
 
-    Ok(())
-}
-
-#[command]
-async fn join(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guild_id = guild.id;
-
-    let channel_id = guild
-        .voice_states
-        .get(&msg.author.id)
-        .and_then(|voice_state| voice_state.channel_id);
-
-    let connect_to = match channel_id {
-        Some(channel) => channel,
-        None => {
-            check_msg(msg.reply(ctx, "Join a voice channel.").await);
-
-            return Ok(());
-        }
-    };
-
-    let manager = songbird::get(ctx).await.unwrap().clone();
-
-    let (_, handler) = manager.join_gateway(guild_id, connect_to).await;
-
-    match handler {
-        Ok(connection_info) => {
-            let data = ctx.data.read().await;
-            let lava_client = data.get::<Lavalink>().unwrap().clone();
-            lava_client.create_session(&connection_info).await?;
-
-            check_msg(
-                msg.channel_id
-                    .say(&ctx.http, &format!("Joined {}", connect_to.mention()))
-                    .await,
-            );
-        }
-        Err(why) => check_msg(
-            msg.channel_id
-                .say(&ctx.http, format!("Error joining the channel: {}", why))
-                .await,
-        ),
-    }
-
-    Ok(())
-}
-
-#[command]
-async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guild_id = guild.id;
-
-    let manager = songbird::get(ctx).await.unwrap().clone();
-    let has_handler = manager.get(guild_id).is_some();
-
-    if has_handler {
-        if let Err(e) = manager.remove(guild_id).await {
-            check_msg(
-                msg.channel_id
-                    .say(&ctx.http, format!("Failed: {:?}", e))
-                    .await,
-            );
-        }
-
-        {
-            let data = ctx.data.read().await;
-            let lava_client = data.get::<Lavalink>().unwrap().clone();
-            lava_client.destroy(guild_id).await?;
-        }
-
-        check_msg(msg.channel_id.say(&ctx.http, "Left voice channel").await);
-    } else {
-        check_msg(msg.reply(ctx, "Not in a voice channel").await);
-    }
-
-    Ok(())
-}
-
-#[command]
-async fn ping(context: &Context, msg: &Message) -> CommandResult {
-    check_msg(msg.channel_id.say(&context.http, "Pong!").await);
-
-    Ok(())
-}
-
-#[command]
-#[min_args(1)]
-async fn play(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
-    let query = args.message().to_string();
-
-    let guild_id = match ctx.cache.guild_channel(msg.channel_id).await {
-        Some(channel) => channel.guild_id,
-        None => {
-            check_msg(
-                msg.channel_id
-                    .say(&ctx.http, "Error finding channel info")
-                    .await,
-            );
-
-            return Ok(());
-        }
-    };
-
-    let manager = songbird::get(ctx).await.unwrap().clone();
-
-    if let Some(_handler) = manager.get(guild_id) {
-        let data = ctx.data.read().await;
-        let lava_client = data.get::<Lavalink>().unwrap().clone();
-
-        let query_information = lava_client.auto_search_tracks(&query).await?;
-        let tracks = query_information.tracks;
-
-        if tracks.is_empty() {
-            check_msg(
-                msg.channel_id
-                    .say(&ctx, "Could not find any video of the search query.")
-                    .await,
-            );
-            return Ok(());
-        }
-
-        let mut track_idx = 0;
-        let emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"];
-        let reactions = emojis
-            .iter()
-            .map(|emoji| emoji.parse().unwrap())
-            .collect::<Vec<ReactionType>>();
-
-        if tracks.len() > 1 {
-            if let Ok(react_msg) = msg
-                .channel_id
-                .send_message(&ctx.http, |m| {
-                    m.embed(|e| {
-                        e.title("🎵 Tracks found 🎵");
-                        for (idx, track) in tracks.iter().take(5).enumerate() {
-                            if let Some(ref info) = track.info {
-                                e.field(
-                                    format!("{} {}", emojis[idx], info.title),
-                                    &info.uri,
-                                    false,
-                                );
-                            } else {
-                                e.field(emojis[idx], "No track info", false);
-                            }
-                        }
-
-                        e
-                    });
-                    m.reactions(
-                        reactions
-                            .into_iter()
-                            .take(tracks.len())
-                            .collect::<Vec<ReactionType>>(),
-                    );
-
-                    m
-                })
-                .await
-            {
-                if let Some(reaction) = &react_msg
-                    .await_reaction(&ctx)
-                    .timeout(Duration::from_secs(10))
-                    .author_id(msg.author.id)
-                    .await
-                {
-                    let emoji = &reaction.as_inner_ref().emoji;
-                    match emoji.as_data().as_str() {
-                        "1️⃣" => track_idx = 0,
-                        "2️⃣" => track_idx = 1,
-                        "3️⃣" => track_idx = 2,
-                        "4️⃣" => track_idx = 3,
-                        "5️⃣" => track_idx = 4,
-                        _ => {
-                            check_msg(
-                                msg.channel_id
-                                    .say(&ctx.http, "Wrong reaction. You had one job.")
-                                    .await,
-                            );
-
-                            return Ok(());
-                        }
-                    }
-                } else {
-                    check_msg(msg.channel_id.say(&ctx.http, "Nothing selected").await);
-
-                    return Ok(());
-                }
-            }
-        }
-
-        if let Err(why) = &lava_client
-            .play(guild_id, tracks[track_idx].clone())
-            .queue()
-            .await
-        {
-            error!("{}", why);
-            return Ok(());
-        };
-        check_msg(
-            msg.channel_id
-                .say(
-                    &ctx.http,
-                    format!(
-                        "Added to queue: {}",
-                        tracks[track_idx].info.as_ref().unwrap().title
-                    ),
-                )
-                .await,
-        );
-    } else {
-        check_msg(
-            msg.channel_id
-                .say(
-                    &ctx.http,
-                    format!(
-                        "Use `{}join` first, to connect the bot to your current voice channel.",
-                        get_bot_prefix()
-                    ),
-                )
-                .await,
-        );
-    }
-
-    Ok(())
-}
-
-#[command]
-#[aliases(np)]
-async fn now_playing(ctx: &Context, msg: &Message) -> CommandResult {
-    let data = ctx.data.read().await;
-    let lava_client = data.get::<Lavalink>().unwrap().clone();
-
-    if let Some(node) = lava_client.nodes().await.get(&msg.guild_id.unwrap().0) {
-        if let Some(track) = &node.now_playing {
-            check_msg(
-                msg.channel_id
-                    .say(
-                        &ctx.http,
-                        format!("Now Playing: {}", track.track.info.as_ref().unwrap().title),
-                    )
-                    .await,
-            );
-        } else {
-            check_msg(
-                msg.channel_id
-                    .say(&ctx.http, "Nothing is playing at the moment.")
-                    .await,
-            );
-        }
-    } else {
-        check_msg(
-            msg.channel_id
-                .say(&ctx.http, "Nothing is playing at the moment.")
-                .await,
-        );
-    }
-
-    Ok(())
-}
-
-#[command]
-async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
-    let data = ctx.data.read().await;
-    let lava_client = data.get::<Lavalink>().unwrap().clone();
-
-    if let Some(track) = lava_client.skip(msg.guild_id.unwrap()).await {
-        check_msg(
-            msg.channel_id
-                .say(
-                    ctx,
-                    format!("Skipped: {}", track.track.info.as_ref().unwrap().title),
-                )
-                .await,
-        );
-    } else {
-        check_msg(msg.channel_id.say(ctx, "Nothing to skip.").await);
-    }
-
-    Ok(())
-}
-
-#[command]
-async fn queue(ctx: &Context, msg: &Message) -> CommandResult {
-    let data = ctx.data.read().await;
-    let lava_client = data.get::<Lavalink>().unwrap().clone();
-
-    if let Some(node) = lava_client.nodes().await.get(&msg.guild_id.unwrap().0) {
-        let tracks = node
-            .queue
-            .iter()
-            .map(|track_queue| track_queue.track.info.clone())
-            .collect::<Vec<_>>();
-
-        if tracks.is_empty() {
-            check_msg(msg.channel_id.say(ctx, "Queue is empty.").await);
-            return Ok(());
-        }
-
-        check_msg(
-            msg.channel_id
-                .send_message(&ctx.http, |m| {
-                    m.embed(|e| {
-                        e.title("Queue");
-                        for (idx, track_info) in tracks.iter().take(10).enumerate() {
-                            if let Some(info) = track_info {
-                                e.field(format!("{}. {}", idx + 1, info.title), &info.uri, false);
-                            } else {
-                                e.field(idx + 1, "No track info", false);
-                            }
-                        }
-
-                        e
-                    });
-
-                    m
-                })
-                .await,
-        );
-    }
     Ok(())
 }
 
