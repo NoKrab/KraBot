@@ -9,6 +9,7 @@ use commands::audio::now_playing::*;
 use commands::audio::play::*;
 use commands::audio::queue::*;
 use commands::audio::skip::*;
+use commands::audio::stop::*;
 
 use commands::general::ping::*;
 
@@ -73,7 +74,7 @@ async fn after(_ctx: &Context, _msg: &Message, command_name: &str, command_resul
 
 #[group]
 #[only_in(guilds)]
-#[commands(join, leave, play, now_playing, skip, ping, queue)]
+#[commands(join, leave, play, now_playing, skip, ping, queue, stop)]
 struct General;
 
 pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
