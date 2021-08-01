@@ -343,7 +343,10 @@ async fn play(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
             msg.channel_id
                 .say(
                     &ctx.http,
-                    "Use `~join` first, to connect the bot to your current voice channel.",
+                    format!(
+                        "Use `{}join` first, to connect the bot to your current voice channel.",
+                        get_bot_prefix()
+                    ),
                 )
                 .await,
         );
