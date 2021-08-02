@@ -9,7 +9,7 @@ services:
             SERVER_PORT: 2333
             SERVER_HOST: 0.0.0.0
     rsbot:
-        image: bitsfitr/rsbot:latest
+        image: bitsfitr/krabot:main
         restart: always
         env_file: 
             - ./.env.docker
