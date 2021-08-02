@@ -1,5 +1,5 @@
 # KraBot
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/NoKrab/KraBot/graphs/commit-activity)
 [![Maintenance](https://gitlab.com/NoKrab/KraBot/badges/main/pipeline.svg)](https://gitlab.com/NoKrab/KraBot/badges/main/pipeline.svg)
 [![rust 1.48.0+ badge]][rust 1.48.0+ link]
 
