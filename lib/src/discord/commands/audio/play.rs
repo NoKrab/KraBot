@@ -124,17 +124,7 @@ async fn play(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
             error!("{}", why);
             return Ok(());
         };
-        check_msg(
-            msg.channel_id
-                .say(
-                    &ctx.http,
-                    format!(
-                        "Added to queue: {}",
-                        tracks[track_idx].info.as_ref().unwrap().title
-                    ),
-                )
-                .await,
-        );
+
         if let Some(track_info) = &tracks[track_idx].info {
             let queue_len = lava_client
                 .nodes()
