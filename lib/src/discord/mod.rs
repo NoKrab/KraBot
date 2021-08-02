@@ -1,5 +1,5 @@
 use core::panic;
-use std::time::Duration;
+use std::{collections::HashSet, time::Duration};
 
 mod commands;
 
@@ -20,17 +20,26 @@ use serenity::{
     client::{Client, Context, EventHandler},
     framework::{
         standard::{
-            macros::{group, hook},
-            CommandResult,
+            help_commands,
+            macros::{group, help, hook},
+            Args, CommandGroup, CommandResult, HelpOptions,
         },
         StandardFramework,
     },
     http::Http,
-    model::{channel::Message, gateway::Ready, id::GuildId},
+    model::{
+        channel::Message,
+        gateway::Ready,
+        id::{GuildId, UserId},
+    },
     Result as SerenityResult,
 };
 
-use lavalink_rs::{gateway::*, model::*, LavalinkClient};
+use lavalink_rs::{
+    gateway::LavalinkEventHandler,
+    model::{TrackFinish, TrackStart},
+    LavalinkClient,
+};
 use serenity::prelude::*;
 use songbird::SerenityInit;
 use tokio::time::sleep;
@@ -74,8 +83,39 @@ async fn after(_ctx: &Context, _msg: &Message, command_name: &str, command_resul
 
 #[group]
 #[only_in(guilds)]
-#[commands(join, leave, play, now_playing, skip, ping, queue, stop)]
+#[commands(join, leave, play, now_playing, skip, queue, stop)]
+struct Audio;
+
+#[group]
+#[only_in(guilds)]
+#[commands(ping)]
 struct General;
+#[group]
+#[owners_only]
+// Limit all commands to be guild-restricted.
+#[only_in(guilds)]
+// Summary only appears when listing multiple groups.
+#[summary = "Commands for server owners"]
+struct Owner;
+
+#[help]
+#[command_not_found_text = "Could not find: `{}`."]
+#[max_levenshtein_distance(3)]
+#[indention_prefix = "+"]
+#[lacking_permissions = "Hide"]
+#[lacking_role = "Nothing"]
+#[wrong_channel = "Strike"]
+async fn my_help(
+    context: &Context,
+    msg: &Message,
+    args: Args,
+    help_options: &'static HelpOptions,
+    groups: &[&'static CommandGroup],
+    owners: HashSet<UserId>,
+) -> CommandResult {
+    let _ = help_commands::with_embeds(context, msg, args, help_options, groups, owners).await;
+    Ok(())
+}
 
 pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
     let token = get_discord_token();
@@ -90,7 +130,9 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
     let framework = StandardFramework::new()
         .configure(|c| c.prefix(&get_bot_prefix()))
         .after(after)
-        .group(&GENERAL_GROUP);
+        .group(&GENERAL_GROUP)
+        .group(&AUDIO_GROUP)
+        .help(&MY_HELP);
 
     let mut client = Client::builder(&token)
         .event_handler(Handler)
