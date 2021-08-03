@@ -4,7 +4,7 @@
 ## Operating System (VM environment) ##
 
 # Rust needs at least Visual Studio 2013 Appveyor OS for MSVC targets.
-os: Visual Studio 2015
+os: Visual Studio 2019
 
 ## Build Matrix ##
 
@@ -39,33 +39,23 @@ environment:
     # Stable 64-bit MSVC
     - channel: stable
       target: x86_64-pc-windows-msvc
-    # Stable 32-bit MSVC
-    - channel: stable
-      target: i686-pc-windows-msvc
-    # Beta 64-bit MSVC
-    - channel: beta
-      target: x86_64-pc-windows-msvc
-    # Beta 32-bit MSVC
-    - channel: beta
-      target: i686-pc-windows-msvc
-    # Nightly 64-bit MSVC
-    - channel: nightly
-      target: x86_64-pc-windows-msvc
-      #cargoflags: --features "unstable"
-    # Nightly 32-bit MSVC
-    - channel: nightly
-      target: i686-pc-windows-msvc
-      #cargoflags: --features "unstable"
+    # # Beta 64-bit MSVC
+    # - channel: beta
+    #   target: x86_64-pc-windows-msvc
+    # # Nightly 64-bit MSVC
+    # - channel: nightly
+    #   target: x86_64-pc-windows-msvc
+    #   #cargoflags: --features "unstable"
 
 ### Allowed failures ###
 
 # See Appveyor documentation for specific details. In short, place any channel or targets you wish
 # to allow build failures on (usually nightly at least is a wise choice). This will prevent a build
 # or test failure in the matching channels/targets from failing the entire build.
-matrix:
-  allow_failures:
-    - channel: nightly
-    - channel: beta
+# matrix:
+#   allow_failures:
+#     - channel: nightly
+#     - channel: beta
 
 ## Install Script ##
 
@@ -82,14 +72,23 @@ install:
   - rustc -vV
   - cargo -vV
 
+cache:
+  - target
+
 ## Build Script ##
 
 # 'cargo test' takes care of building for us, so disable Appveyor's build stage. This prevents
 # the "directory does not contain a project or solution file" error.
-build: false
+# build: false
+build_script:
+  - cargo build --release
 
 # Uses 'cargo test' to run tests and build. Alternatively, the project may call compiled programs
-#directly or perform other testing commands. Rust will automatically be placed in the PATH
+# directly or perform other testing commands. Rust will automatically be placed in the PATH
 # environment variable.
 test_script:
   - cargo test %cargoflags%
+
+artifacts:
+  - path: target/release/bin.exe
+    name: KraBot
