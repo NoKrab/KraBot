@@ -1,6 +1,9 @@
+mod cli;
+
 #[macro_use]
 extern crate log;
 
+use cli::setup_cli;
 use dotenv::dotenv;
 use lib::discord::start;
 use lib::print_2b;
@@ -9,6 +12,7 @@ use std::io::ErrorKind;
 
 #[tokio::main]
 async fn main() {
+    setup_cli();
     if let Err(e) = create_log_folder() {
         match e.kind() {
             ErrorKind::AlreadyExists => (),
@@ -16,6 +20,13 @@ async fn main() {
         }
     }
     log4rs::init_file("./config/log4rs.toml", Default::default()).unwrap();
+    debug!("cargo bin version: {}", env!("CARGO_PKG_VERSION"));
+    debug!("build Timestamp: {}", env!("VERGEN_BUILD_TIMESTAMP"));
+    debug!(
+        "git branch: {}-{}",
+        env!("VERGEN_GIT_BRANCH"),
+        env!("VERGEN_GIT_SHA")
+    );
     print_2b();
     dotenv().ok();
     if let Err(e) = start().await {
