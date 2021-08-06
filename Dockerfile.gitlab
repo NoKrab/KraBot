@@ -1,0 +1,7 @@
+FROM alpine:latest
+RUN apk add --no-cache tini
+WORKDIR /app
+COPY ./target/x86_64-unknown-linux-musl/release/bin .
+COPY ./config/ config
+VOLUME [ "/app/logs" ]
+ENTRYPOINT ["/sbin/tini", "--", "/app/bin"]
