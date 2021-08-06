@@ -1,32 +1,40 @@
 stages:
-  - build
+  # - build
   - build static binary
 
-build_image:
-  stage: build
-  image: docker:latest
-  services:
-    - docker:dind
-  script:
-    - docker version
-    - export LOWER_CASE_CI_PROJECT_NAME=$(echo "$CI_PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
-    - DOCKER_BUILDKIT=1 docker build --progress=plain -t bitsfitr/$LOWER_CASE_CI_PROJECT_NAME:latest -t bitsfitr/$LOWER_CASE_CI_PROJECT_NAME:$CI_COMMIT_REF_NAME .
-    - docker login -u bitsfitr -p $CI_BUILD_TOKEN $CI_REGISTRY
-    - docker push --all-tags bitsfitr/$LOWER_CASE_CI_PROJECT_NAME
-    - docker logout
+# build_image:
+#   stage: build
+#   image: docker:latest
+#   services:
+#     - docker:dind
+#   script:
+#     - docker version
+#     - export LOWER_CASE_CI_PROJECT_NAME=$(echo "$CI_PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
+#     - DOCKER_BUILDKIT=1 docker build --progress=plain -t bitsfitr/$LOWER_CASE_CI_PROJECT_NAME:latest -t bitsfitr/$LOWER_CASE_CI_PROJECT_NAME:$CI_COMMIT_REF_NAME .
+#     - docker login -u bitsfitr -p $CI_BUILD_TOKEN $CI_REGISTRY
+#     - docker push --all-tags bitsfitr/$LOWER_CASE_CI_PROJECT_NAME
+#     - docker logout
 
 build_static_binary:
   stage: build static binary
+  image: docker:latest
+  services:
+    - docker:dind
   cache:
     - key:
         files:
           - Cargo.lock
       paths:
         - target/
-  image: ekidd/rust-musl-builder:latest
   script:
-    - cargo --version && rustc --version
-    - cargo build --release
+    - docker version
+    - docker run --rm -it -v "$(pwd)":/home/rust/src ekidd/rust-musl-builder cargo --version && rustc --version
+    - docker run --rm -it -v "$(pwd)":/home/rust/src ekidd/rust-musl-builder cargo --version && rustc --version cargo build --release
+    - export LOWER_CASE_CI_PROJECT_NAME=$(echo "$CI_PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
+    - DOCKER_BUILDKIT=1 docker build --progress=plain -t bitsfitr/$LOWER_CASE_CI_PROJECT_NAME:latest -t bitsfitr/$LOWER_CASE_CI_PROJECT_NAME:$CI_COMMIT_REF_NAME -f Dockerfile.gitlab .
+    - docker login -u bitsfitr -p $CI_BUILD_TOKEN $CI_REGISTRY
+    - docker push --all-tags bitsfitr/$LOWER_CASE_CI_PROJECT_NAME
+    - docker logout
   artifacts:
     paths:
-      - target/release/bin
+      - target/x86_64-unknown-linux-musl/release/bin
