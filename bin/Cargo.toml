@@ -13,6 +13,7 @@ log = "0.4"
 log4rs = { version = "1", features = ["toml_format"] }
 chrono = "0.4"
 tokio = { features = ["macros", "rt-multi-thread", "sync"], version = "1" }
+clap = "3.0.0-beta"
 
 [build-dependencies]
 vergen = "5"

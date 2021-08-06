@@ -1,6 +1,9 @@
+mod cli;
+
 #[macro_use]
 extern crate log;
 
+use cli::setup_cli;
 use dotenv::dotenv;
 use lib::discord::start;
 use lib::print_2b;
@@ -9,6 +12,7 @@ use std::io::ErrorKind;
 
 #[tokio::main]
 async fn main() {
+    setup_cli();
     if let Err(e) = create_log_folder() {
         match e.kind() {
             ErrorKind::AlreadyExists => (),
