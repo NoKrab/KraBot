@@ -28,8 +28,8 @@ build_static_binary:
         - target/
   script:
     - docker version
-    - docker run --rm -v "$(pwd)":/home/rust/src ekidd/rust-musl-builder cargo --version
-    - docker run --rm -v "$(pwd)":/home/rust/src ekidd/rust-musl-builder rustc --version
+    - docker run --rm ekidd/rust-musl-builder cargo --version
+    - docker run --rm ekidd/rust-musl-builder rustc --version
     - docker run --rm -v "$(pwd)":/home/rust/src ekidd/rust-musl-builder cargo build --release
     - export LOWER_CASE_CI_PROJECT_NAME=$(echo "$CI_PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
     - DOCKER_BUILDKIT=1 docker build --progress=plain -t bitsfitr/$LOWER_CASE_CI_PROJECT_NAME:latest -t bitsfitr/$LOWER_CASE_CI_PROJECT_NAME:$CI_COMMIT_REF_NAME -f Dockerfile.gitlab .
