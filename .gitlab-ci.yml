@@ -1,5 +1,6 @@
 stages:
   - build
+  - build static binary
 
 build_image:
   stage: build
@@ -13,3 +14,19 @@ build_image:
     - docker login -u bitsfitr -p $CI_BUILD_TOKEN $CI_REGISTRY
     - docker push --all-tags bitsfitr/$LOWER_CASE_CI_PROJECT_NAME
     - docker logout
+
+build_static_binary:
+  stage: build static binary
+  cache:
+    - key:
+        files:
+          - Cargo.lock
+      paths:
+        - target/
+  image: ekidd/rust-musl-builder:latest
+  script:
+    - cargo --version && rustc --version
+    - cargo build --release
+  artifacts:
+    paths:
+      - target/release/bin
