@@ -73,6 +73,7 @@ install:
   - cargo -vV
 
 cache:
+  - %USERPROFILE%\.cargo\registry
   - target
 
 ## Build Script ##
