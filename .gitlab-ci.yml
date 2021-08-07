@@ -1,19 +1,5 @@
 stages:
-  # - build
   - build static binary
-
-# build_image:
-#   stage: build
-#   image: docker:latest
-#   services:
-#     - docker:dind
-#   script:
-#     - docker version
-#     - export LOWER_CASE_CI_PROJECT_NAME=$(echo "$CI_PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
-#     - DOCKER_BUILDKIT=1 docker build --progress=plain -t bitsfitr/$LOWER_CASE_CI_PROJECT_NAME:latest -t bitsfitr/$LOWER_CASE_CI_PROJECT_NAME:$CI_COMMIT_REF_NAME .
-#     - docker login -u bitsfitr -p $CI_BUILD_TOKEN $CI_REGISTRY
-#     - docker push --all-tags bitsfitr/$LOWER_CASE_CI_PROJECT_NAME
-#     - docker logout
 
 build_static_binary:
   stage: build static binary
@@ -25,12 +11,15 @@ build_static_binary:
         files:
           - Cargo.lock
       paths:
+        - /tmp/cargo-registry
+        - /tmp/cargo-git
         - target/
   script:
     - docker version
     - docker run --rm ekidd/rust-musl-builder cargo --version
     - docker run --rm ekidd/rust-musl-builder rustc --version
-    - docker run --rm -v "$(pwd)":/home/rust/src ekidd/rust-musl-builder cargo build --release
+    - mkdir /tmp/cargo-registry && mkdir /tmp/cargo-git
+    - docker run --rm -v "$(pwd)":/home/rust/src -v /tmp/cargo-registry:/home/rust/.cargo/registry -v /tmp/cargo-git:/home/rust/.cargo/git ekidd/rust-musl-builder cargo build --release
     - rm .dockerignore
     - export LOWER_CASE_CI_PROJECT_NAME=$(echo "$CI_PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
     - DOCKER_BUILDKIT=1 docker build --progress=plain -t bitsfitr/$LOWER_CASE_CI_PROJECT_NAME:latest -t bitsfitr/$LOWER_CASE_CI_PROJECT_NAME:$CI_COMMIT_REF_NAME -f Dockerfile.gitlab .
