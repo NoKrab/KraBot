@@ -18,7 +18,7 @@ build_static_binary:
     - docker version
     - docker run --rm ekidd/rust-musl-builder cargo --version
     - docker run --rm ekidd/rust-musl-builder rustc --version
-    - mkdir /tmp/cargo-registry && mkdir /tmp/cargo-git
+    - mkdir -p /tmp/cargo-registry && chmod 777 /tmp/cargo-registry && mkdir -p /tmp/cargo-git && chmod 777 /tmp/cargo-git
     - docker run --rm -v "$(pwd)":/home/rust/src -v /tmp/cargo-registry:/home/rust/.cargo/registry -v /tmp/cargo-git:/home/rust/.cargo/git ekidd/rust-musl-builder cargo build --release
     - rm .dockerignore
     - export LOWER_CASE_CI_PROJECT_NAME=$(echo "$CI_PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
