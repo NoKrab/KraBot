@@ -73,8 +73,9 @@ install:
   - cargo -vV
 
 cache:
-  - "%USERPROFILE%\\.cargo\\registry"
-  - target
+  - '%USERPROFILE%\.cargo\registry'
+  - '%USERPROFILE%\.cargo\git'
+  - target -> Cargo.lock
 
 ## Build Script ##
 
