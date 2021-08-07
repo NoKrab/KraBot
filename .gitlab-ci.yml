@@ -10,6 +10,7 @@ build_static_binary:
     - key:
         files:
           - Cargo.lock
+      untracked: true
       paths:
         - /tmp/cargo-registry
         - /tmp/cargo-git
