@@ -11,9 +11,13 @@ use commands::audio::queue::*;
 use commands::audio::skip::*;
 use commands::audio::stop::*;
 
+use commands::general::metadata::*;
 use commands::general::ping::*;
 
+use crate::discord::commands::general::metadata::set_metadata;
+
 use super::env::{get_bot_prefix, get_discord_token, get_lavalink_env};
+use super::misc::Metadata;
 
 use serenity::{
     async_trait,
@@ -88,7 +92,7 @@ struct Audio;
 
 #[group]
 #[only_in(guilds)]
-#[commands(ping)]
+#[commands(ping, version)]
 struct General;
 #[group]
 #[owners_only]
@@ -117,7 +121,8 @@ async fn my_help(
     Ok(())
 }
 
-pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
+pub async fn start(metadata: Metadata) -> Result<(), Box<dyn std::error::Error>> {
+    set_metadata(metadata).await;
     let token = get_discord_token();
 
     let http = Http::new_with_token(&token);

@@ -6,6 +6,7 @@ extern crate log;
 use cli::setup_cli;
 use dotenv::dotenv;
 use lib::discord::start;
+use lib::misc::Metadata;
 use lib::print_2b;
 use std::fs;
 use std::io::ErrorKind;
@@ -29,7 +30,12 @@ async fn main() {
     );
     print_2b();
     dotenv().ok();
-    if let Err(e) = start().await {
+    let metadata = Metadata {
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        git: format!("{}-{}", env!("VERGEN_GIT_BRANCH"), env!("VERGEN_GIT_SHA")),
+        date: env!("VERGEN_BUILD_TIMESTAMP").to_string(),
+    };
+    if let Err(e) = start(metadata).await {
         error!("{}", e)
     }
 }

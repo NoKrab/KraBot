@@ -6,6 +6,7 @@ publish = false
 
 [dependencies]
 log = "0.4"
+lazy_static = "1.4"
 serenity = { version = "0.10", default-features = false, features = [
     "client",
     "cache",
