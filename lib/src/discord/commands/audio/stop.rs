@@ -8,11 +8,13 @@ use crate::discord::{check_msg, Lavalink};
 
 #[command]
 async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
+    let lava_client = {
+        let data_read = ctx.data.read().await;
+        data_read.get::<Lavalink>().unwrap().clone()
+    };
+
     let guild = msg.guild(&ctx.cache).await.unwrap();
     let guild_id = guild.id;
-
-    let data = ctx.data.read().await;
-    let lava_client = data.get::<Lavalink>().unwrap().clone();
 
     if lava_client.stop(guild_id).await.is_ok() {
         if let Some(mut node) = lava_client.nodes().await.get_mut(&msg.guild_id.unwrap().0) {

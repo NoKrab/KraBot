@@ -11,20 +11,23 @@ use crate::discord::{check_msg, commands::audio::is_playing};
 
 #[command]
 async fn seek(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
+    let lava_client = {
+        let data_read = ctx.data.read().await;
+        data_read.get::<Lavalink>().unwrap().clone()
+    };
     let time_str = args.message().to_string();
-    let data = ctx.data.read().await;
-    let lava_client = data.get::<Lavalink>().unwrap().clone();
+
     let guild = msg.guild(&ctx.cache).await.unwrap();
     let guild_id = guild.id;
 
-    if !is_playing(&lava_client, guild_id).await {
-        check_msg(
-            msg.channel_id
-                .say(&ctx.http, "Nothing is playing at the moment.")
-                .await,
-        );
-        return Ok(());
-    }
+    // if !is_playing(&lava_client, guild_id).await {
+    //     check_msg(
+    //         msg.channel_id
+    //             .say(&ctx.http, "Nothing is playing at the moment.")
+    //             .await,
+    //     );
+    //     return Ok(());
+    // }
 
     let time_segments = time_str
         .splitn(3, ":")

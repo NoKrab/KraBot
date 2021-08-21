@@ -79,6 +79,13 @@ impl LavalinkEventHandler for LavalinkHandler {
     async fn track_finish(&self, _client: LavalinkClient, event: TrackFinish) {
         info!("Track finished!\nGuild: {}", event.guild_id);
     }
+    async fn player_update(
+        &self,
+        _client: LavalinkClient,
+        _event: lavalink_rs::model::PlayerUpdate,
+    ) {
+        debug!("{:#?}", _event);
+    }
 }
 
 #[hook]

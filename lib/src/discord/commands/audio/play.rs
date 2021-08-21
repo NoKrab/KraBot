@@ -32,8 +32,10 @@ async fn play(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
     let manager = songbird::get(ctx).await.unwrap().clone();
 
     if let Some(_handler) = manager.get(guild_id) {
-        let data = ctx.data.read().await;
-        let lava_client = data.get::<Lavalink>().unwrap().clone();
+        let lava_client = {
+            let data_read = ctx.data.read().await;
+            data_read.get::<Lavalink>().unwrap().clone()
+        };
 
         let query_information = lava_client.auto_search_tracks(&query).await?;
         let tracks = query_information.tracks;

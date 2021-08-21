@@ -9,8 +9,10 @@ use crate::discord::{check_msg, Lavalink};
 #[command]
 #[aliases(np)]
 async fn now_playing(ctx: &Context, msg: &Message) -> CommandResult {
-    let data = ctx.data.read().await;
-    let lava_client = data.get::<Lavalink>().unwrap().clone();
+    let lava_client = {
+        let data_read = ctx.data.read().await;
+        data_read.get::<Lavalink>().unwrap().clone()
+    };
 
     if let Some(node) = lava_client.nodes().await.get(&msg.guild_id.unwrap().0) {
         if let Some(track) = &node.now_playing {
