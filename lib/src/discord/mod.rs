@@ -92,6 +92,8 @@ async fn after(ctx: &Context, msg: &Message, command_name: &str, command_result:
             .await,
         );
         error!("Command '{}' returned error {:?} => {}", command_name, e, e)
+    } else {
+        let _ = msg.react(ctx, '✅').await;
     }
 }
 

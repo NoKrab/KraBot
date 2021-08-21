@@ -4,33 +4,17 @@ use serenity::{
     model::channel::Message,
 };
 
-use crate::discord::check_msg;
 use crate::discord::Lavalink;
-
-use super::is_playing;
 
 #[command]
 #[aliases(unpause)]
 async fn resume(ctx: &Context, msg: &Message) -> CommandResult {
-    let data = ctx.data.read().await;
-    let lava_client = data.get::<Lavalink>().unwrap().clone();
-    let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guild_id = guild.id;
+    let lava_client = {
+        let data_read = ctx.data.read().await;
+        data_read.get::<Lavalink>().unwrap().clone()
+    };
 
-    if is_playing(&lava_client, guild_id).await {
-        check_msg(
-            msg.channel_id
-                .say(&ctx.http, "Player is already unpaused.")
-                .await,
-        );
-        return Ok(());
-    }
+    lava_client.resume(msg.guild_id.unwrap()).await?;
 
-    if lava_client.resume(guild_id).await.is_ok() {
-        if let Some(mut node) = lava_client.nodes().await.get_mut(&msg.guild_id.unwrap().0) {
-            node.is_paused = false;
-        }
-        check_msg(msg.channel_id.say(&ctx.http, "Player unpaused.").await);
-    }
     Ok(())
 }

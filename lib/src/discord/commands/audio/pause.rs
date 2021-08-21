@@ -5,41 +5,15 @@ use serenity::{
 };
 
 use crate::discord::Lavalink;
-use crate::{discord::check_msg, env::get_bot_prefix};
-
-use super::is_playing;
 
 #[command]
 async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
-    let data = ctx.data.read().await;
-    let lava_client = data.get::<Lavalink>().unwrap().clone();
-    let guild = msg.guild(&ctx.cache).await.unwrap();
-    let guild_id = guild.id;
+    let lava_client = {
+        let data_read = ctx.data.read().await;
+        data_read.get::<Lavalink>().unwrap().clone()
+    };
 
-    if !is_playing(&lava_client, guild_id).await {
-        check_msg(
-            msg.channel_id
-                .say(&ctx.http, "Nothing is playing at the moment.")
-                .await,
-        );
-        return Ok(());
-    }
+    lava_client.pause(msg.guild_id.unwrap()).await?;
 
-    if lava_client.pause(guild_id).await.is_ok() {
-        if let Some(mut node) = lava_client.nodes().await.get_mut(&msg.guild_id.unwrap().0) {
-            node.is_paused = true;
-        }
-        check_msg(
-            msg.channel_id
-                .say(
-                    &ctx.http,
-                    format!(
-                        "Player paused. Use command `{}resume` to unpause the player.",
-                        get_bot_prefix()
-                    ),
-                )
-                .await,
-        );
-    }
     Ok(())
 }
