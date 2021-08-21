@@ -43,6 +43,7 @@ async fn seek(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
                 .say(ctx, "Invalid time format. Try hh:mm:ss")
                 .await,
         );
+        return Ok(());
     }
 
     let time_segments = time_segments
