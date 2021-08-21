@@ -7,6 +7,7 @@ use serenity::{
 use crate::discord::check_msg;
 use crate::discord::Lavalink;
 
+/// Skips current track.
 #[command]
 async fn skip(ctx: &Context, msg: &Message) -> CommandResult {
     let lava_client = {

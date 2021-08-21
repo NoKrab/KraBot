@@ -6,6 +6,7 @@ use serenity::{
 
 use crate::discord::Lavalink;
 
+/// Pauses the player
 #[command]
 async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
     let lava_client = {

@@ -6,6 +6,7 @@ use serenity::{
 
 use crate::discord::{check_msg, Lavalink};
 
+/// Shows some information about the current playing track
 #[command]
 #[aliases(np)]
 async fn now_playing(ctx: &Context, msg: &Message) -> CommandResult {

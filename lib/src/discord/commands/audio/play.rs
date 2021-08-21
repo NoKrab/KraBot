@@ -11,6 +11,11 @@ use crate::{
     env::get_bot_prefix,
 };
 
+/// Adds a song to the queue.
+///
+/// Usage:
+/// - `play Never Gonna Give You Up`
+/// - `play https://www.youtube.com/watch?v=dQw4w9WgXcQ`
 #[command]
 #[min_args(1)]
 async fn play(ctx: &Context, msg: &Message, args: Args) -> CommandResult {

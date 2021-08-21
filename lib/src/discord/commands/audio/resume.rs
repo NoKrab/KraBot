@@ -6,6 +6,7 @@ use serenity::{
 
 use crate::discord::Lavalink;
 
+/// Unpauses the player.
 #[command]
 #[aliases(unpause)]
 async fn resume(ctx: &Context, msg: &Message) -> CommandResult {

@@ -6,6 +6,7 @@ use serenity::{
 
 use crate::discord::{check_msg, Lavalink};
 
+/// Stops the current player and clears the queue.
 #[command]
 async fn stop(ctx: &Context, msg: &Message) -> CommandResult {
     let lava_client = {

@@ -17,6 +17,8 @@ pub async fn set_metadata(metadata: Metadata) {
     *mut_metadata = metadata;
 }
 
+/// Displays the current crate version.
+/// Repository: https://github.com/NoKrab/KraBot
 #[command]
 async fn version(context: &Context, msg: &Message) -> CommandResult {
     let metadata = METADATA.lock().await;
