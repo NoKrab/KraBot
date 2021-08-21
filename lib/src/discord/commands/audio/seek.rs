@@ -29,7 +29,7 @@ async fn seek(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
     let guild_id = guild.id;
 
     let time_segments = time_str
-        .splitn(3, ":")
+        .splitn(3, ':')
         .map(|seg| seg.parse::<u64>())
         .collect::<Vec<_>>();
 

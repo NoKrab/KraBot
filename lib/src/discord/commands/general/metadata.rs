@@ -24,7 +24,7 @@ async fn version(context: &Context, msg: &Message) -> CommandResult {
     let metadata = METADATA.lock().await;
     check_msg(
         msg.channel_id
-            .say(&context.http, format!("{}", metadata.version))
+            .say(&context.http, metadata.version.to_string())
             .await,
     );
 
