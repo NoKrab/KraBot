@@ -1,15 +1,16 @@
 pub struct Metadata {
-    pub version: String,
+    pub version: &'static str,
     pub git: String,
-    pub date: String,
+    pub date: &'static str,
 }
 
 impl Default for Metadata {
     fn default() -> Self {
+        let no_val = "No Data";
         Self {
-            version: "No Data".to_string(),
-            git: "No Data".to_string(),
-            date: "No Data".to_string(),
+            version: no_val,
+            git: "No Data".to_owned(),
+            date: no_val,
         }
     }
 }
