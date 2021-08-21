@@ -80,8 +80,13 @@ impl LavalinkEventHandler for LavalinkHandler {
 }
 
 #[hook]
-async fn after(_ctx: &Context, _msg: &Message, command_name: &str, command_result: CommandResult) {
+async fn after(ctx: &Context, msg: &Message, command_name: &str, command_result: CommandResult) {
     if let Err(e) = command_result {
+        msg.reply(
+            ctx.http,
+            format!("Failed to execute command '{}'", command_name),
+        )
+        .await;
         error!("Command '{}' returned error {:?} => {}", command_name, e, e)
     }
 }
