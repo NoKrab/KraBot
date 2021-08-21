@@ -16,7 +16,7 @@ async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = msg.guild(&ctx.cache).await.unwrap();
     let guild_id = guild.id;
 
-    if is_playing(&lava_client, guild_id).await {
+    if !is_playing(&lava_client, guild_id).await {
         check_msg(
             msg.channel_id
                 .say(&ctx.http, "Nothing is playing at the moment.")
