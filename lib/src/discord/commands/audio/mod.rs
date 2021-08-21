@@ -1,10 +1,12 @@
 use std::time::Duration;
 
+use lavalink_rs::{model::GuildId, LavalinkClient};
 use serenity::builder::CreateEmbed;
 
 pub mod join;
 pub mod leave;
 pub mod now_playing;
+pub mod pause;
 pub mod play;
 pub mod queue;
 pub mod seek;
@@ -35,4 +37,18 @@ fn yt_embed<'a>(
         track_info.identifier
     ));
     e
+}
+
+async fn is_playing(lava_client: &LavalinkClient, guild_id: impl Into<GuildId>) -> bool {
+    lava_client
+        .nodes()
+        .await
+        .get(&guild_id.into().0)
+        .and_then(|node| {
+            if node.is_paused {
+                return None;
+            }
+            node.now_playing.as_ref().map(|_| ())
+        })
+        .is_none()
 }

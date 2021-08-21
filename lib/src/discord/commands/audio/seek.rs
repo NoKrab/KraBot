@@ -6,8 +6,8 @@ use serenity::{
     model::channel::Message,
 };
 
-use crate::discord::check_msg;
 use crate::discord::Lavalink;
+use crate::discord::{check_msg, commands::audio::is_playing};
 
 #[command]
 async fn seek(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
@@ -17,13 +17,7 @@ async fn seek(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
     let guild = msg.guild(&ctx.cache).await.unwrap();
     let guild_id = guild.id;
 
-    if lava_client
-        .nodes()
-        .await
-        .get(&guild_id.0)
-        .and_then(|node| node.now_playing.as_ref().map(|_| ()))
-        .is_none()
-    {
+    if is_playing(&lava_client, guild_id).await {
         check_msg(
             msg.channel_id
                 .say(&ctx.http, "Nothing is playing at the moment.")
@@ -60,9 +54,7 @@ async fn seek(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
 
     let time = Duration::from_secs(time_secs);
 
-    if lava_client.seek(guild_id, time).await.is_err() {
-        check_msg(msg.channel_id.say(ctx, "Failed to seek").await);
-    }
+    lava_client.seek(guild_id, time).await?;
 
     Ok(())
 }
