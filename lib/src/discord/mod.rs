@@ -6,6 +6,7 @@ mod commands;
 use commands::audio::join::*;
 use commands::audio::leave::*;
 use commands::audio::now_playing::*;
+use commands::audio::pause::*;
 use commands::audio::play::*;
 use commands::audio::queue::*;
 use commands::audio::seek::*;
@@ -95,7 +96,7 @@ async fn after(ctx: &Context, msg: &Message, command_name: &str, command_result:
 
 #[group]
 #[only_in(guilds)]
-#[commands(join, leave, play, now_playing, skip, queue, stop, seek)]
+#[commands(join, leave, play, now_playing, skip, queue, stop, seek, pause)]
 struct Audio;
 
 #[group]
