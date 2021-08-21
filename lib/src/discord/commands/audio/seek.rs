@@ -6,8 +6,8 @@ use serenity::{
     model::channel::Message,
 };
 
+use crate::discord::check_msg;
 use crate::discord::Lavalink;
-use crate::discord::{check_msg, commands::audio::is_playing};
 
 #[command]
 async fn seek(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
