@@ -46,7 +46,7 @@ async fn is_playing(lava_client: &LavalinkClient, guild_id: impl Into<GuildId>) 
         .await
         .get(&guild_id.into().0)
         .and_then(|node| {
-            if node.is_paused {
+            if dbg!(node.is_paused) {
                 return None;
             }
             node.now_playing.as_ref().map(|_| ())

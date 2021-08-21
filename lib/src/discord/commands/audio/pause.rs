@@ -26,6 +26,9 @@ async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
     }
 
     if lava_client.pause(guild_id).await.is_ok() {
+        if let Some(mut node) = lava_client.nodes().await.get_mut(&msg.guild_id.unwrap().0) {
+            node.is_paused = true;
+        }
         check_msg(
             msg.channel_id
                 .say(
