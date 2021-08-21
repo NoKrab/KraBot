@@ -4,8 +4,8 @@ use serenity::{
     model::channel::Message,
 };
 
-use crate::discord::check_msg;
 use crate::discord::Lavalink;
+use crate::{discord::check_msg, env::get_bot_prefix};
 
 use super::is_playing;
 
@@ -25,7 +25,18 @@ async fn pause(ctx: &Context, msg: &Message) -> CommandResult {
         return Ok(());
     }
 
-    lava_client.pause(guild_id).await?;
-
+    if lava_client.pause(guild_id).await.is_ok() {
+        check_msg(
+            msg.channel_id
+                .say(
+                    &ctx.http,
+                    format!(
+                        "Player paused. Use command `{}resume` to unpause the player.",
+                        get_bot_prefix()
+                    ),
+                )
+                .await,
+        );
+    }
     Ok(())
 }
