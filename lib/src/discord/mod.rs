@@ -1,8 +1,13 @@
 use core::panic;
-use std::{collections::HashSet, time::Duration};
+use std::{
+    collections::HashSet,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 mod commands;
 mod events;
+mod global_data;
 mod hooks;
 
 use commands::audio::join::*;
@@ -19,10 +24,12 @@ use commands::audio::stop::*;
 
 use commands::general::metadata::*;
 use commands::general::ping::*;
+use commands::general::uptime::*;
 
 use crate::discord::{
     commands::general::metadata::set_metadata,
     events::{Handler, LavalinkHandler},
+    global_data::{Lavalink, Uptime},
     hooks::after,
 };
 
@@ -45,15 +52,8 @@ use serenity::{
 };
 
 use lavalink_rs::LavalinkClient;
-use serenity::prelude::*;
 use songbird::SerenityInit;
 use tokio::time::sleep;
-
-struct Lavalink;
-
-impl TypeMapKey for Lavalink {
-    type Value = LavalinkClient;
-}
 
 #[group]
 #[only_in(guilds)]
@@ -74,7 +74,7 @@ struct Audio;
 
 #[group]
 #[only_in(guilds)]
-#[commands(ping, version)]
+#[commands(ping, version, uptime)]
 struct General;
 #[group]
 #[owners_only]
@@ -128,35 +128,38 @@ pub async fn start(metadata: Metadata) -> Result<(), Box<dyn std::error::Error>>
         .await
         .expect("Err creating client");
 
-    let (host, port, auth) = get_lavalink_env();
-
-    let mut remaining_attempts = 20;
-    let lava_client = loop {
-        if let Ok(client) = LavalinkClient::builder(bot_id)
-            .set_host(&host)
-            .set_port(port)
-            .set_password(&auth)
-            .build(LavalinkHandler)
-            .await
-        {
-            info!("Connected to LavaLink Server");
-            break client;
-        }
-
-        remaining_attempts -= 1;
-
-        if remaining_attempts < 0 {
-            error!("Could not connect to LavaLink Server. Is it running?");
-            std::process::exit(0);
-        }
-
-        // Give LavaLink some time to boot...
-        sleep(Duration::from_millis(2000)).await;
-    };
-
+    // Scope to define global data
     {
         let mut data = client.data.write().await;
-        data.insert::<Lavalink>(lava_client);
+        data.insert::<Uptime>(Arc::new(Instant::now()));
+        {
+            let (host, port, auth) = get_lavalink_env();
+
+            let mut remaining_attempts = 20;
+            let lava_client = loop {
+                if let Ok(client) = LavalinkClient::builder(bot_id)
+                    .set_host(&host)
+                    .set_port(port)
+                    .set_password(&auth)
+                    .build(LavalinkHandler)
+                    .await
+                {
+                    info!("Connected to LavaLink Server");
+                    break client;
+                }
+
+                remaining_attempts -= 1;
+
+                if remaining_attempts < 0 {
+                    error!("Could not connect to LavaLink Server. Is it running?");
+                    std::process::exit(0);
+                }
+
+                // Give LavaLink some time to boot...
+                sleep(Duration::from_millis(2000)).await;
+            };
+            data.insert::<Lavalink>(lava_client);
+        }
     }
 
     let _ = client
