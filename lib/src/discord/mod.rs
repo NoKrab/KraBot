@@ -2,6 +2,8 @@ use core::panic;
 use std::{collections::HashSet, time::Duration};
 
 mod commands;
+mod events;
+mod hooks;
 
 use commands::audio::join::*;
 use commands::audio::leave::*;
@@ -18,36 +20,31 @@ use commands::audio::stop::*;
 use commands::general::metadata::*;
 use commands::general::ping::*;
 
-use crate::discord::commands::general::metadata::set_metadata;
+use crate::discord::{
+    commands::general::metadata::set_metadata,
+    events::{Handler, LavalinkHandler},
+    hooks::after,
+};
 
 use super::env::{get_bot_prefix, get_discord_token, get_lavalink_env};
 use super::misc::Metadata;
 
 use serenity::{
-    async_trait,
-    client::{Client, Context, EventHandler},
+    client::{Client, Context},
     framework::{
         standard::{
             help_commands,
-            macros::{group, help, hook},
+            macros::{group, help},
             Args, CommandGroup, CommandResult, HelpOptions,
         },
         StandardFramework,
     },
     http::Http,
-    model::{
-        channel::Message,
-        gateway::Ready,
-        id::{GuildId, UserId},
-    },
+    model::{channel::Message, id::UserId},
     Result as SerenityResult,
 };
 
-use lavalink_rs::{
-    gateway::LavalinkEventHandler,
-    model::{TrackFinish, TrackStart},
-    LavalinkClient,
-};
+use lavalink_rs::LavalinkClient;
 use serenity::prelude::*;
 use songbird::SerenityInit;
 use tokio::time::sleep;
@@ -56,47 +53,6 @@ struct Lavalink;
 
 impl TypeMapKey for Lavalink {
     type Value = LavalinkClient;
-}
-
-struct Handler;
-struct LavalinkHandler;
-
-#[async_trait]
-impl EventHandler for Handler {
-    async fn ready(&self, _: Context, ready: Ready) {
-        info!("{} is connected!", ready.user.name);
-    }
-
-    async fn cache_ready(&self, _: Context, guilds: Vec<GuildId>) {
-        info!("cache is ready!\n{:#?}", guilds);
-    }
-}
-
-#[async_trait]
-impl LavalinkEventHandler for LavalinkHandler {
-    async fn track_start(&self, _client: LavalinkClient, event: TrackStart) {
-        info!("Track started!\nGuild: {}", event.guild_id);
-    }
-    async fn track_finish(&self, _client: LavalinkClient, event: TrackFinish) {
-        info!("Track finished!\nGuild: {}", event.guild_id);
-    }
-    async fn player_update(
-        &self,
-        _client: LavalinkClient,
-        _event: lavalink_rs::model::PlayerUpdate,
-    ) {
-        debug!("{:#?}", _event);
-    }
-}
-
-#[hook]
-async fn after(ctx: &Context, msg: &Message, command_name: &str, command_result: CommandResult) {
-    if let Err(e) = command_result {
-        error!("Command '{}' returned error {:?} => {}", command_name, e, e);
-        let _ = msg.react(ctx, '❌').await;
-    } else {
-        let _ = msg.react(ctx, '✅').await;
-    }
 }
 
 #[group]

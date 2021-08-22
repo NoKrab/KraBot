@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use serenity::{
     client::Context,
     framework::standard::{macros::command, Args, CommandResult},
