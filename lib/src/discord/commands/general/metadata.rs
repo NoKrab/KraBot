@@ -35,7 +35,6 @@ fn create_embed<'a>(e: &'a mut CreateEmbed, m: &Metadata) -> &'a mut CreateEmbed
 #[command]
 async fn version(ctx: &Context, msg: &Message) -> CommandResult {
     let metadata = METADATA.lock().await;
-    // let me = *metadata;
     check_msg(
         msg.channel_id
             .send_message(&ctx.http, |m| {
