@@ -11,6 +11,11 @@ use crate::{
     env::get_bot_prefix,
 };
 
+/// Adds a song to the queue.
+///
+/// Usage:
+/// - `play Never Gonna Give You Up`
+/// - `play https://www.youtube.com/watch?v=dQw4w9WgXcQ`
 #[command]
 #[min_args(1)]
 async fn play(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
@@ -32,8 +37,10 @@ async fn play(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
     let manager = songbird::get(ctx).await.unwrap().clone();
 
     if let Some(_handler) = manager.get(guild_id) {
-        let data = ctx.data.read().await;
-        let lava_client = data.get::<Lavalink>().unwrap().clone();
+        let lava_client = {
+            let data_read = ctx.data.read().await;
+            data_read.get::<Lavalink>().unwrap().clone()
+        };
 
         let query_information = lava_client.auto_search_tracks(&query).await?;
         let tracks = query_information.tracks;
@@ -118,6 +125,7 @@ async fn play(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
 
         if let Err(why) = &lava_client
             .play(guild_id, tracks[track_idx].clone())
+            .requester(msg.author.id)
             .queue()
             .await
         {
@@ -138,7 +146,7 @@ async fn play(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
                 msg.channel_id
                     .send_message(&ctx.http, |m| {
                         m.content("Added to queue");
-                        m.embed(|e| super::yt_embed(e, track_info, queue_len));
+                        m.embed(|e| super::yt_embed(e, track_info, queue_len, &msg.author.name));
                         m
                     })
                     .await,

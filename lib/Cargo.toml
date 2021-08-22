@@ -6,6 +6,7 @@ publish = false
 
 [dependencies]
 log = "0.4"
+lazy_static = "1.4"
 serenity = { version = "0.10", default-features = false, features = [
     "client",
     "cache",
@@ -17,8 +18,8 @@ serenity = { version = "0.10", default-features = false, features = [
     "collector",
 ] }
 tokio = { version = "1.0", features = ["full"] }
-lavalink-rs = { version = "*", features = ["rustls", "serenity"] }
-songbird = { version = "*", default-features = false, features = [
+lavalink-rs = { version = "0.8.0", features = ["rustls", "serenity"] }
+songbird = { version = "0.1.8", default-features = false, features = [
     "serenity-rustls",
     "gateway",
 ] }

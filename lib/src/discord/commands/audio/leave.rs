@@ -6,6 +6,7 @@ use serenity::{
 
 use crate::discord::{check_msg, Lavalink};
 
+/// Leaves the current voice channel.
 #[command]
 async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = msg.guild(&ctx.cache).await.unwrap();

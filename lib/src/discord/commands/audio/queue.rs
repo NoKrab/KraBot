@@ -6,10 +6,13 @@ use serenity::{
 
 use crate::discord::{check_msg, Lavalink};
 
+/// Displays the next `10` tracks of the queue.
 #[command]
 async fn queue(ctx: &Context, msg: &Message) -> CommandResult {
-    let data = ctx.data.read().await;
-    let lava_client = data.get::<Lavalink>().unwrap().clone();
+    let lava_client = {
+        let data_read = ctx.data.read().await;
+        data_read.get::<Lavalink>().unwrap().clone()
+    };
 
     if let Some(node) = lava_client.nodes().await.get(&msg.guild_id.unwrap().0) {
         let tracks = node
@@ -35,8 +38,7 @@ async fn queue(ctx: &Context, msg: &Message) -> CommandResult {
                                 e.field(idx + 1, "No track info", false);
                             }
                         }
-
-                        e
+                        e.footer(|f| f.text(format!("Remaining tracks in queue: {}", tracks.len())))
                     });
 
                     m

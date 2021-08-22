@@ -1,8 +1,11 @@
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate lazy_static;
 
 pub mod discord;
 pub mod env;
+pub mod misc;
 
 pub fn print_2b() {
     info!(

@@ -7,6 +7,7 @@ use serenity::{
 use crate::discord::{check_msg, Lavalink};
 use serenity::prelude::Mentionable;
 
+/// Joins to the users current voice channel.
 #[command]
 async fn join(ctx: &Context, msg: &Message) -> CommandResult {
     let guild = msg.guild(&ctx.cache).await.unwrap();
