@@ -1,5 +1,12 @@
 stages:
+  - audit
   - build static binary
+
+audit:
+  stage: audit
+  image: ekidd/rust-musl-builder
+  script:
+    - cargo audit
 
 build_static_binary:
   stage: build static binary
