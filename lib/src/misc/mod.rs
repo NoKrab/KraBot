@@ -1,6 +1,6 @@
 pub struct Metadata {
     pub version: &'static str,
-    pub git: String,
+    pub git: &'static str,
     pub date: &'static str,
 }
 
@@ -9,7 +9,7 @@ impl Default for Metadata {
         let no_val = "No Data";
         Self {
             version: no_val,
-            git: "No Data".to_owned(),
+            git: no_val,
             date: no_val,
         }
     }

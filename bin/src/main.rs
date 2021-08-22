@@ -32,7 +32,7 @@ async fn main() {
     dotenv().ok();
     let metadata = Metadata {
         version: env!("CARGO_PKG_VERSION"),
-        git: format!("{}-{}", env!("VERGEN_GIT_BRANCH"), env!("VERGEN_GIT_SHA")),
+        git: concat!(env!("VERGEN_GIT_BRANCH"), '-', env!("VERGEN_GIT_SHA")),
         date: env!("VERGEN_BUILD_TIMESTAMP"),
     };
     if let Err(e) = start(metadata).await {
