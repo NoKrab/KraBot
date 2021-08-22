@@ -38,8 +38,7 @@ async fn queue(ctx: &Context, msg: &Message) -> CommandResult {
                                 e.field(idx + 1, "No track info", false);
                             }
                         }
-
-                        e
+                        e.footer(|f| f.text(format!("Remaining tracks in queue: {}", tracks.len())))
                     });
 
                     m

@@ -1,13 +1,21 @@
 use core::panic;
-use std::{collections::HashSet, time::Duration};
+use std::{
+    collections::HashSet,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 mod commands;
+mod events;
+mod global_data;
+mod hooks;
 
 use commands::audio::join::*;
 use commands::audio::leave::*;
 use commands::audio::now_playing::*;
 use commands::audio::pause::*;
 use commands::audio::play::*;
+use commands::audio::play_playlist::*;
 use commands::audio::queue::*;
 use commands::audio::resume::*;
 use commands::audio::seek::*;
@@ -16,96 +24,57 @@ use commands::audio::stop::*;
 
 use commands::general::metadata::*;
 use commands::general::ping::*;
+use commands::general::uptime::*;
 
-use crate::discord::commands::general::metadata::set_metadata;
+use crate::discord::{
+    commands::general::metadata::set_metadata,
+    events::{Handler, LavalinkHandler},
+    global_data::{Lavalink, Uptime},
+    hooks::after,
+};
 
 use super::env::{get_bot_prefix, get_discord_token, get_lavalink_env};
 use super::misc::Metadata;
 
 use serenity::{
-    async_trait,
-    client::{Client, Context, EventHandler},
+    client::{Client, Context},
     framework::{
         standard::{
             help_commands,
-            macros::{group, help, hook},
+            macros::{group, help},
             Args, CommandGroup, CommandResult, HelpOptions,
         },
         StandardFramework,
     },
     http::Http,
-    model::{
-        channel::Message,
-        gateway::Ready,
-        id::{GuildId, UserId},
-    },
+    model::{channel::Message, id::UserId},
     Result as SerenityResult,
 };
 
-use lavalink_rs::{
-    gateway::LavalinkEventHandler,
-    model::{TrackFinish, TrackStart},
-    LavalinkClient,
-};
-use serenity::prelude::*;
+use lavalink_rs::LavalinkClient;
 use songbird::SerenityInit;
 use tokio::time::sleep;
 
-struct Lavalink;
-
-impl TypeMapKey for Lavalink {
-    type Value = LavalinkClient;
-}
-
-struct Handler;
-struct LavalinkHandler;
-
-#[async_trait]
-impl EventHandler for Handler {
-    async fn ready(&self, _: Context, ready: Ready) {
-        info!("{} is connected!", ready.user.name);
-    }
-
-    async fn cache_ready(&self, _: Context, guilds: Vec<GuildId>) {
-        info!("cache is ready!\n{:#?}", guilds);
-    }
-}
-
-#[async_trait]
-impl LavalinkEventHandler for LavalinkHandler {
-    async fn track_start(&self, _client: LavalinkClient, event: TrackStart) {
-        info!("Track started!\nGuild: {}", event.guild_id);
-    }
-    async fn track_finish(&self, _client: LavalinkClient, event: TrackFinish) {
-        info!("Track finished!\nGuild: {}", event.guild_id);
-    }
-    async fn player_update(
-        &self,
-        _client: LavalinkClient,
-        _event: lavalink_rs::model::PlayerUpdate,
-    ) {
-        debug!("{:#?}", _event);
-    }
-}
-
-#[hook]
-async fn after(ctx: &Context, msg: &Message, command_name: &str, command_result: CommandResult) {
-    if let Err(e) = command_result {
-        error!("Command '{}' returned error {:?} => {}", command_name, e, e);
-        let _ = msg.react(ctx, '❌').await;
-    } else {
-        let _ = msg.react(ctx, '✅').await;
-    }
-}
-
 #[group]
 #[only_in(guilds)]
-#[commands(join, leave, play, now_playing, skip, queue, stop, seek, pause, resume)]
+#[commands(
+    join,
+    leave,
+    play,
+    now_playing,
+    skip,
+    queue,
+    stop,
+    seek,
+    pause,
+    resume,
+    play_playlist
+)]
 struct Audio;
 
 #[group]
 #[only_in(guilds)]
-#[commands(ping, version)]
+#[commands(ping, version, uptime)]
 struct General;
 #[group]
 #[owners_only]
@@ -159,35 +128,38 @@ pub async fn start(metadata: Metadata) -> Result<(), Box<dyn std::error::Error>>
         .await
         .expect("Err creating client");
 
-    let (host, port, auth) = get_lavalink_env();
-
-    let mut remaining_attempts = 20;
-    let lava_client = loop {
-        if let Ok(client) = LavalinkClient::builder(bot_id)
-            .set_host(&host)
-            .set_port(port)
-            .set_password(&auth)
-            .build(LavalinkHandler)
-            .await
-        {
-            info!("Connected to LavaLink Server");
-            break client;
-        }
-
-        remaining_attempts -= 1;
-
-        if remaining_attempts < 0 {
-            error!("Could not connect to LavaLink Server. Is it running?");
-            std::process::exit(0);
-        }
-
-        // Give LavaLink some time to boot...
-        sleep(Duration::from_millis(2000)).await;
-    };
-
+    // Scope to define global data
     {
         let mut data = client.data.write().await;
-        data.insert::<Lavalink>(lava_client);
+        data.insert::<Uptime>(Arc::new(Instant::now()));
+        {
+            let (host, port, auth) = get_lavalink_env();
+
+            let mut remaining_attempts = 20;
+            let lava_client = loop {
+                if let Ok(client) = LavalinkClient::builder(bot_id)
+                    .set_host(&host)
+                    .set_port(port)
+                    .set_password(&auth)
+                    .build(LavalinkHandler)
+                    .await
+                {
+                    info!("Connected to LavaLink Server");
+                    break client;
+                }
+
+                remaining_attempts -= 1;
+
+                if remaining_attempts < 0 {
+                    error!("Could not connect to LavaLink Server. Is it running?");
+                    std::process::exit(0);
+                }
+
+                // Give LavaLink some time to boot...
+                sleep(Duration::from_millis(2000)).await;
+            };
+            data.insert::<Lavalink>(lava_client);
+        }
     }
 
     let _ = client

@@ -7,6 +7,7 @@ pub mod leave;
 pub mod now_playing;
 pub mod pause;
 pub mod play;
+pub mod play_playlist;
 pub mod queue;
 pub mod resume;
 pub mod seek;
@@ -17,6 +18,7 @@ fn yt_embed<'a>(
     e: &'a mut CreateEmbed,
     track_info: &lavalink_rs::model::Info,
     queue_len: usize,
+    requester: &str,
 ) -> &'a mut CreateEmbed {
     e.title(&track_info.title);
     e.url(&track_info.uri);
@@ -36,5 +38,5 @@ fn yt_embed<'a>(
         "https://img.youtube.com/vi/{}/maxresdefault.jpg",
         track_info.identifier
     ));
-    e
+    e.footer(|f| f.text(format!("Submited by {}", requester)))
 }
