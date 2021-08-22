@@ -8,6 +8,7 @@ use commands::audio::leave::*;
 use commands::audio::now_playing::*;
 use commands::audio::pause::*;
 use commands::audio::play::*;
+use commands::audio::play_playlist::*;
 use commands::audio::queue::*;
 use commands::audio::resume::*;
 use commands::audio::seek::*;
@@ -100,7 +101,19 @@ async fn after(ctx: &Context, msg: &Message, command_name: &str, command_result:
 
 #[group]
 #[only_in(guilds)]
-#[commands(join, leave, play, now_playing, skip, queue, stop, seek, pause, resume)]
+#[commands(
+    join,
+    leave,
+    play,
+    now_playing,
+    skip,
+    queue,
+    stop,
+    seek,
+    pause,
+    resume,
+    play_playlist
+)]
 struct Audio;
 
 #[group]

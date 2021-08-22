@@ -7,6 +7,7 @@ pub mod leave;
 pub mod now_playing;
 pub mod pause;
 pub mod play;
+pub mod play_playlist;
 pub mod queue;
 pub mod resume;
 pub mod seek;
