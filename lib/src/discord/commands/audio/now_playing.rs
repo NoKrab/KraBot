@@ -17,10 +17,18 @@ async fn now_playing(ctx: &Context, msg: &Message) -> CommandResult {
 
     if let Some(node) = lava_client.nodes().await.get(&msg.guild_id.unwrap().0) {
         if let Some(track) = &node.now_playing {
+            let requester = if let Some(u) = track.requester {
+                u.to_serenity().to_user(ctx).await.unwrap_or_default().name
+            } else {
+                "Unknown".to_string()
+            };
+
             check_msg(
                 msg.channel_id
                     .send_message(&ctx.http, |m| {
-                        m.embed(|e| super::yt_embed(e, track.track.info.as_ref().unwrap(), 1));
+                        m.embed(|e| {
+                            super::yt_embed(e, track.track.info.as_ref().unwrap(), 1, &requester)
+                        });
                         m
                     })
                     .await,

@@ -125,6 +125,7 @@ async fn play(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
 
         if let Err(why) = &lava_client
             .play(guild_id, tracks[track_idx].clone())
+            .requester(msg.author.id)
             .queue()
             .await
         {
@@ -145,7 +146,7 @@ async fn play(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
                 msg.channel_id
                     .send_message(&ctx.http, |m| {
                         m.content("Added to queue");
-                        m.embed(|e| super::yt_embed(e, track_info, queue_len));
+                        m.embed(|e| super::yt_embed(e, track_info, queue_len, &msg.author.name));
                         m
                     })
                     .await,
