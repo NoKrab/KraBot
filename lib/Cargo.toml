@@ -17,7 +17,7 @@ serenity = { version = "0.10", default-features = false, features = [
     "standard_framework",
     "collector",
 ] }
-tokio = { version = "1.0", features = ["full"] }
+tokio = { version = "1.10", features = ["full"] }
 lavalink-rs = { version = "0.8.0", features = ["rustls", "serenity"] }
 songbird = { version = "0.1.8", default-features = false, features = [
     "serenity-rustls",
