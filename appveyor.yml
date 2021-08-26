@@ -74,11 +74,12 @@ install:
 
 cache:
   - '%USERPROFILE%\.cargo\registry'
-  - '%USERPROFILE%\.cargo\git'
-  - target -> Cargo.lock
+  - '%USERPROFILE%\.cargo\advisory-db'
+  # - '%USERPROFILE%\.cargo\git'
+  - target
 
 before_build:
-  - cargo install --force cargo-audit
+  - cargo install cargo-audit
   - cargo generate-lockfile
 
 ## Build Script ##
