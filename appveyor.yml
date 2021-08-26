@@ -74,22 +74,26 @@ install:
 
 cache:
   - '%USERPROFILE%\.cargo\registry'
-  - '%USERPROFILE%\.cargo\git'
-  - target -> Cargo.lock
+  - '%USERPROFILE%\.cargo\advisory-db'
+  # - '%USERPROFILE%\.cargo\git'
+  - target
+
+before_build:
+  - cargo install cargo-audit
+  - cargo generate-lockfile
 
 ## Build Script ##
 
-# 'cargo test' takes care of building for us, so disable Appveyor's build stage. This prevents
-# the "directory does not contain a project or solution file" error.
 # build: false
 build_script:
+  - cargo audit
   - cargo build --release
 
 # Uses 'cargo test' to run tests and build. Alternatively, the project may call compiled programs
 # directly or perform other testing commands. Rust will automatically be placed in the PATH
 # environment variable.
-test_script:
-  - cargo test %cargoflags%
+# test_script:
+#   - cargo test %cargoflags%
 
 artifacts:
   - path: target/release/bin.exe

@@ -1,5 +1,4 @@
-use clap::ArgMatches;
-use clap::{crate_version, App};
+use clap::{crate_version, App, ArgMatches};
 
 pub fn setup_cli() -> ArgMatches {
     App::new("KraBot")
