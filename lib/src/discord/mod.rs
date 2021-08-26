@@ -23,6 +23,7 @@ use commands::audio::skip::*;
 use commands::audio::stop::*;
 
 use commands::general::metadata::*;
+use commands::general::password::*;
 use commands::general::ping::*;
 use commands::general::uptime::*;
 
@@ -74,7 +75,7 @@ struct Audio;
 
 #[group]
 #[only_in(guilds)]
-#[commands(ping, version, uptime)]
+#[commands(ping, version, uptime, password)]
 struct General;
 #[group]
 #[owners_only]

@@ -23,3 +23,4 @@ songbird = { version = "0.1.8", default-features = false, features = [
     "serenity-rustls",
     "gateway",
 ] }
+passwords = "3.1"
