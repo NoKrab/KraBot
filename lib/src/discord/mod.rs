@@ -25,6 +25,7 @@ use commands::audio::stop::*;
 use commands::general::metadata::*;
 use commands::general::password::*;
 use commands::general::ping::*;
+use commands::general::score_password::*;
 use commands::general::uptime::*;
 
 use crate::discord::{
@@ -75,7 +76,7 @@ struct Audio;
 
 #[group]
 #[only_in(guilds)]
-#[commands(ping, version, uptime, password)]
+#[commands(ping, version, uptime, password, score_password)]
 struct General;
 #[group]
 #[owners_only]
