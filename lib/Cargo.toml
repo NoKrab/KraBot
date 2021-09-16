@@ -24,3 +24,4 @@ songbird = { version = "0.1.8", default-features = false, features = [
     "gateway",
 ] }
 passwords = "3.1"
+rand = "0.8.4"
