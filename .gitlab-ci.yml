@@ -4,7 +4,7 @@ stages:
 
 audit:
   stage: audit
-  image: ekidd/rust-musl-builder
+  image: bitsfitr/rust-musl-builder
   script:
     - cargo audit
 
@@ -24,11 +24,11 @@ build_static_binary:
         - target/
   script:
     - docker version
-    - docker run --rm ekidd/rust-musl-builder cargo --version
-    - docker run --rm ekidd/rust-musl-builder rustc --version
+    - docker run --rm bitsfitr/rust-musl-builder cargo --version
+    - docker run --rm bitsfitr/rust-musl-builder rustc --version
     - mkdir -p cargo-registry && mkdir -p cargo-git
-    - docker run --rm -v "$(pwd)":/home/rust/src -v `pwd`/cargo-registry:/home/rust/.cargo/registry -v `pwd`/cargo-git:/home/rust/.cargo/git ekidd/rust-musl-builder sudo chown -R rust:rust /home/rust
-    - docker run --rm -v "$(pwd)":/home/rust/src -v `pwd`/cargo-registry:/home/rust/.cargo/registry -v `pwd`/cargo-git:/home/rust/.cargo/git ekidd/rust-musl-builder cargo build --release
+    - docker run --rm -v "$(pwd)":/home/rust/src -v `pwd`/cargo-registry:/home/rust/.cargo/registry -v `pwd`/cargo-git:/home/rust/.cargo/git bitsfitr/rust-musl-builder sudo chown -R rust:rust /home/rust
+    - docker run --rm -v "$(pwd)":/home/rust/src -v `pwd`/cargo-registry:/home/rust/.cargo/registry -v `pwd`/cargo-git:/home/rust/.cargo/git bitsfitr/rust-musl-builder cargo build --release
     - rm .dockerignore
     - export LOWER_CASE_CI_PROJECT_NAME=$(echo "$CI_PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
     - DOCKER_BUILDKIT=1 docker build --progress=plain -t bitsfitr/$LOWER_CASE_CI_PROJECT_NAME:latest -t bitsfitr/$LOWER_CASE_CI_PROJECT_NAME:$CI_COMMIT_REF_NAME -f Dockerfile.gitlab .

@@ -25,7 +25,10 @@ use commands::audio::stop::*;
 use commands::general::metadata::*;
 use commands::general::password::*;
 use commands::general::ping::*;
+use commands::general::score_password::*;
 use commands::general::uptime::*;
+
+use commands::fun::roll::*;
 
 use crate::discord::{
     commands::general::metadata::set_metadata,
@@ -75,7 +78,7 @@ struct Audio;
 
 #[group]
 #[only_in(guilds)]
-#[commands(ping, version, uptime, password)]
+#[commands(ping, version, uptime, password, score_password)]
 struct General;
 #[group]
 #[owners_only]
@@ -84,6 +87,11 @@ struct General;
 // Summary only appears when listing multiple groups.
 #[summary = "Commands for server owners"]
 struct Owner;
+
+#[group]
+#[only_in(guilds)]
+#[commands(roll)]
+struct Fun;
 
 #[help]
 #[command_not_found_text = "Could not find: `{}`."]
@@ -120,6 +128,7 @@ pub async fn start(metadata: Metadata) -> Result<(), Box<dyn std::error::Error>>
         .after(after)
         .group(&GENERAL_GROUP)
         .group(&AUDIO_GROUP)
+        .group(&FUN_GROUP)
         .help(&MY_HELP);
 
     let mut client = Client::builder(&token)
