@@ -1,4 +1,4 @@
-use clap::{crate_version, App, ArgMatches};
+use clap::{App, ArgMatches};
 
 pub fn setup_cli() -> ArgMatches {
     App::new("KraBot")
@@ -9,8 +9,7 @@ pub fn setup_cli() -> ArgMatches {
 
 fn version() -> String {
     format!(
-        "{}\n{}-{}\n{}",
-        crate_version!(),
+        "{}-{}\n{}",
         env!("VERGEN_GIT_BRANCH"),
         env!("VERGEN_GIT_SHA"),
         env!("VERGEN_BUILD_TIMESTAMP")
