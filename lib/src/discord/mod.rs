@@ -28,6 +28,8 @@ use commands::general::ping::*;
 use commands::general::score_password::*;
 use commands::general::uptime::*;
 
+use commands::fun::roll::*;
+
 use crate::discord::{
     commands::general::metadata::set_metadata,
     events::{Handler, LavalinkHandler},
@@ -86,6 +88,11 @@ struct General;
 #[summary = "Commands for server owners"]
 struct Owner;
 
+#[group]
+#[only_in(guilds)]
+#[commands(roll)]
+struct Fun;
+
 #[help]
 #[command_not_found_text = "Could not find: `{}`."]
 #[max_levenshtein_distance(3)]
@@ -121,6 +128,7 @@ pub async fn start(metadata: Metadata) -> Result<(), Box<dyn std::error::Error>>
         .after(after)
         .group(&GENERAL_GROUP)
         .group(&AUDIO_GROUP)
+        .group(&FUN_GROUP)
         .help(&MY_HELP);
 
     let mut client = Client::builder(&token)
