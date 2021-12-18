@@ -9,7 +9,8 @@ pub fn setup_cli() -> ArgMatches {
 
 fn version() -> String {
     format!(
-        "{}-{}\n{}",
+        "{}\n{}-{}\n{}",
+        env!("CARGO_PKG_VERSION"),
         env!("VERGEN_GIT_BRANCH"),
         env!("VERGEN_GIT_SHA"),
         env!("VERGEN_BUILD_TIMESTAMP")
