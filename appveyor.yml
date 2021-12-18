@@ -78,15 +78,15 @@ cache:
   # - '%USERPROFILE%\.cargo\git'
   - target
 
-before_build:
-  - cargo install cargo-audit
-  - cargo generate-lockfile
+# before_build:
+#   - cargo install cargo-audit
+#   - cargo generate-lockfile
 
 ## Build Script ##
 
 # build: false
 build_script:
-  - cargo audit 2>&1
+  # - cargo audit
   - cargo build --release
 
 # Uses 'cargo test' to run tests and build. Alternatively, the project may call compiled programs
