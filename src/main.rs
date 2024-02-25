@@ -30,7 +30,7 @@ pub type Context<'a> = poise::Context<'a, Data, Error>;
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     setup_cli();
-    dotenv().expect(".env file not found");
+    let _ = dotenv();
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
