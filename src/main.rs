@@ -31,8 +31,6 @@ pub type Context<'a> = poise::Context<'a, Data, Error>;
 async fn main() -> Result<(), Error> {
     setup_cli();
     dotenv().expect(".env file not found");
-    std::env::set_var("RUST_LOG", "info,lavalink_rs=trace");
-    tracing_subscriber::fmt::init();
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
