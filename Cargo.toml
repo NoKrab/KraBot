@@ -1,0 +1,42 @@
+[package]
+name = "KraBot"
+version = "0.0.1"
+edition = "2021"
+build = "build.rs"
+
+[dependencies]
+itertools = "0.12"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+serde_json = "1"
+futures = "0.3"
+dotenvy = "0.15"
+clap = "3"
+rand = "0.8.5"
+
+[dependencies.poise]
+version = "0.6"
+default-features = false
+features = ["cache", "chrono", "handle_panics"]
+
+[dependencies.songbird]
+version = "0.4"
+default-features = false
+features = ["gateway", "serenity", "native"]
+
+[dependencies.tokio]
+version = "1"
+features = ["rt-multi-thread", "macros"]
+
+[dependencies.lavalink-rs]
+git = "https://gitlab.com/vicky5124/lavalink-rs.git"
+rev = "716373c939eae1cd44085f8c64ab6f705e928a17" # was main at that time
+default-features = false
+features = ["songbird", "serenity", "native-tls", "macros"]
+
+[build-dependencies]
+anyhow = "1"
+
+[build-dependencies.vergen]
+version = "8"
+features = ["build", "cargo", "git", "gitcl", "rustc", "si"]
