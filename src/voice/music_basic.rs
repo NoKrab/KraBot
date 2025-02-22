@@ -98,12 +98,14 @@ pub async fn play(
         if term.starts_with("http") {
             term
         } else {
-            SearchEngines::YouTube.to_query(&term)?
+            //SearchEngines::YouTube.to_query(&term)?
+            SearchEngines::Deezer.to_query(&term)?
         }
     } else {
         if let Ok(player_data) = player.get_player().await {
-            if player_data.track.is_none() && player.get_queue().await.is_ok_and(|x| !x.is_empty())
-            {
+            let queue = player.get_queue();
+
+            if player_data.track.is_none() && queue.get_track(0).await.is_ok_and(|x| x.is_some()) {
                 player.skip()?;
             } else {
                 ctx.say("The queue is empty.").await?;
@@ -117,12 +119,12 @@ pub async fn play(
 
     let mut playlist_info = None;
 
-    let tracks: Vec<TrackInQueue> = match loaded_tracks.data {
+    let mut tracks: Vec<TrackInQueue> = match loaded_tracks.data {
         Some(TrackLoadData::Track(x)) => vec![x.into()],
         Some(TrackLoadData::Search(x)) => vec![x[0].clone().into()],
         Some(TrackLoadData::Playlist(x)) => {
             playlist_info = Some(x.info);
-            x.tracks.iter().map(|x| x.into()).collect()
+            x.tracks.iter().map(|x| x.clone().into()).collect()
         }
 
         _ => {
@@ -152,13 +154,19 @@ pub async fn play(
         }
     }
 
-    player.set_queue(QueueMessage::Append(tracks.into()))?;
+    for i in &mut tracks {
+        i.track.user_data = Some(serde_json::json!({"requester_id": ctx.author().id.get()}));
+    }
+
+    let queue = player.get_queue();
+    queue.append(tracks.into())?;
+
+    if has_joined {
+        return Ok(());
+    }
 
     if let Ok(player_data) = player.get_player().await {
-        if player_data.track.is_none()
-            && player.get_queue().await.is_ok_and(|x| !x.is_empty())
-            && !has_joined
-        {
+        if player_data.track.is_none() && queue.get_track(0).await.is_ok_and(|x| x.is_some()) {
             player.skip()?;
         }
     }

@@ -30,9 +30,9 @@ features = ["rt-multi-thread", "macros"]
 
 [dependencies.lavalink-rs]
 git = "https://gitlab.com/vicky5124/lavalink-rs.git"
-rev = "716373c939eae1cd44085f8c64ab6f705e928a17" # was main at that time
+rev = "66e65d5280017c204e3a2ae9b7f586a8df87a863" # was main at that time
 default-features = false
-features = ["songbird", "serenity", "native-tls", "macros"]
+features = ["songbird", "serenity", "tungstenite-native-tls", "macros"]
 
 [build-dependencies]
 anyhow = "1"
